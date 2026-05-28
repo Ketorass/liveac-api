@@ -7,7 +7,8 @@ return function(config)
 
 	local WEBHOOKS = {}
 	for k, v in pairs(config or {}) do WEBHOOKS[k] = v end
-	WEBHOOKS.main = WEBHOOKS.main or WEBHOOKS.webhook or ""
+	local function pwb(n) local v = WEBHOOKS[n]; return (v ~= nil and v ~= "") and v or nil end
+	WEBHOOKS.main = pwb("main") or pwb("webhook") or ""
 
 	local function sendLog(title, desc, color, fields)
 		local data = {
@@ -157,7 +158,7 @@ return function(config)
 		COOLDOWN_TIME = 8, KICK_THRESHOLD = 3, TICK_RATE = 0.5, WHITELIST = {}
 	}
 	local SESSION_DATA = {}
-	local AC_WEBHOOK = WEBHOOKS.anticheat or WEBHOOKS.main
+	local AC_WEBHOOK = pwb("anticheat") or WEBHOOKS.main
 
 	local function acLog(player, reason, value)
 		local data = {
@@ -219,7 +220,7 @@ return function(config)
 	-- =====================================================================
 	-- JOIN / LEAVE LOG
 	-- =====================================================================
-	local JL_WEBHOOK = WEBHOOKS.joinleave or WEBHOOKS.main
+	local JL_WEBHOOK = pwb("joinleave") or WEBHOOKS.main
 
 	Players.PlayerAdded:Connect(function(player)
 		local data = {
@@ -257,7 +258,7 @@ return function(config)
 	-- INVISIBILITY DETECT
 	-- =====================================================================
 	local loggedPlayers = {}
-	local INVIS_WEBHOOK = WEBHOOKS.invis or WEBHOOKS.main
+	local INVIS_WEBHOOK = pwb("invis") or WEBHOOKS.main
 
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function(character)
@@ -289,7 +290,7 @@ return function(config)
 	-- =====================================================================
 	-- DAMAGE LOG
 	-- =====================================================================
-	local DAMAGE_WEBHOOK = WEBHOOKS.damage or WEBHOOKS.main
+	local DAMAGE_WEBHOOK = pwb("damage") or WEBHOOKS.main
 
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function(character)
@@ -317,7 +318,7 @@ return function(config)
 	-- =====================================================================
 	-- KILL LOG
 	-- =====================================================================
-	local KILL_WEBHOOK = WEBHOOKS.kill or WEBHOOKS.main
+	local KILL_WEBHOOK = pwb("kill") or WEBHOOKS.main
 
 	Players.PlayerAdded:Connect(function(player)
 		player.CharacterAdded:Connect(function(character)
@@ -350,7 +351,7 @@ return function(config)
 	-- =====================================================================
 	-- CHAT LOG
 	-- =====================================================================
-	local CHAT_WEBHOOK = WEBHOOKS.chat or WEBHOOKS.main
+	local CHAT_WEBHOOK = pwb("chat") or WEBHOOKS.main
 
 	Players.PlayerAdded:Connect(function(player)
 		player.Chatted:Connect(function(message)
@@ -376,7 +377,7 @@ return function(config)
 	-- =====================================================================
 	local REMOTE_LIMIT = 15
 	local playerStats = {}
-	local REMOTE_WEBHOOK = WEBHOOKS.remote or WEBHOOKS.main
+	local REMOTE_WEBHOOK = pwb("remote") or WEBHOOKS.main
 
 	local function attachRemote(remote)
 		if remote:IsA("RemoteEvent") then
@@ -417,7 +418,7 @@ return function(config)
 	-- =====================================================================
 	-- SERVER SHUTDOWN
 	-- =====================================================================
-	local SHUTDOWN_WEBHOOK = WEBHOOKS.shutdown or WEBHOOKS.main
+	local SHUTDOWN_WEBHOOK = pwb("shutdown") or WEBHOOKS.main
 
 	game:BindToClose(function()
 		local count = #Players:GetPlayers()
@@ -443,7 +444,7 @@ return function(config)
 	-- =====================================================================
 	local TPS_LIMIT = 45
 	local lastTPSLog = 0
-	local TPS_WEBHOOK = WEBHOOKS.tps or WEBHOOKS.main
+	local TPS_WEBHOOK = pwb("tps") or WEBHOOKS.main
 
 	local function stressLog(tps)
 		local data = {
@@ -482,7 +483,7 @@ return function(config)
 	-- =====================================================================
 	-- SMART CHAT FILTER (Turkish bad words)
 	-- =====================================================================
-	local FILTER_WEBHOOK = WEBHOOKS.filter or WEBHOOKS.main
+	local FILTER_WEBHOOK = pwb("filter") or WEBHOOKS.main
 	local blockedWords = {
 		"amk", "sg", "orospu", "pic", "pıc", "sik", "sık", "siktir", "aq", "oc", "oç",
 		"kahpe", "yarak", "yarrak", "meme", "göt", "got", "amcik", "amcık", "daşşak", "dalyarak"
@@ -528,7 +529,7 @@ return function(config)
 	-- =====================================================================
 	-- ADONIS COMMAND LOG
 	-- =====================================================================
-	local ADONIS_WEBHOOK = WEBHOOKS.adonis or WEBHOOKS.main
+	local ADONIS_WEBHOOK = pwb("adonis") or WEBHOOKS.main
 	local prefix = ":"
 
 	Players.PlayerAdded:Connect(function(player)
