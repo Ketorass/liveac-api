@@ -75,9 +75,26 @@ app.get("/anticheat", async (req, res) => {
 
   try {
     let code = fs.readFileSync(path.join(__dirname, filename), "utf8");
+    code = code.replace(/local LICENSE_KEY = "[^"]*"/, `local LICENSE_KEY = "${req.query.key}"`);
     if (req.query.obfuscate === "true") {
       code = obfuscate(code);
     }
+    res.send(code);
+  } catch {
+    res.send("INVALID");
+  }
+});
+
+app.get("/script", async (req, res) => {
+  const status = await checkLicense(req.query.key);
+  if (status !== "OK") return res.send(status);
+
+  const lang = req.query.lang === "en" ? "en" : "tr";
+  const filename = `loader-${lang}.lua`;
+
+  try {
+    let code = fs.readFileSync(path.join(__dirname, filename), "utf8");
+    code = code.replace(/%KEY%/g, req.query.key);
     res.send(code);
   } catch {
     res.send("INVALID");
