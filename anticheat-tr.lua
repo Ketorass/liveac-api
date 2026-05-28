@@ -154,7 +154,7 @@ Players.PlayerAdded:Connect(function(player)
 end)
 
 -- =====================================================================
--- CHAT SPAM PROTECTION
+-- CHAT SYSTEM (Spam + Log + Filter + Adonis)
 -- =====================================================================
 local spamNotifyEvent = Instance.new("RemoteEvent", ReplicatedStorage)
 spamNotifyEvent.Name = "SpamNotifyEvent"
@@ -163,11 +163,47 @@ local MUTE_TIME = 60
 local playerChatCount = {}
 local mutedPlayers = {}
 
-TextChatService.MessageReceived:Connect(function(textChatMessage)
-	local textSource = textChatMessage.TextSource
-	if not textSource then return end
-	local player = Players:GetPlayerByUserId(textSource.UserId)
-	if not player or mutedPlayers[player] then return end
+local blockedWords = {
+	"amk", "sg", "orospu", "pic", "pıc", "sik", "sık", "siktir", "aq", "oc", "oç",
+	"kahpe", "yarak", "yarrak", "meme", "got", "göt", "amcik", "amcık", "dassak", "daşşak", "dalyarak",
+	"discordgg", "robloxcom", "sunucupatlatma"
+}
+
+local function cleanText(text)
+	text = string.lower(text)
+	text = string.gsub(text, "@", "a")
+	text = string.gsub(text, "0", "o")
+	text = string.gsub(text, "1", "i")
+	text = string.gsub(text, "3", "e")
+	text = string.gsub(text, "7", "t")
+	text = string.gsub(text, "[%s%p%c]", "")
+	local out, last = "", ""
+	for i = 1, #text do
+		local c = string.sub(text, i, i)
+		if c ~= last then out = out .. c; last = c end
+	end
+	return out
+end
+
+local function handleChatMessage(player, message)
+	if not player then return end
+	if #message < 1 then return end
+
+	-- Chat log
+	local embed = {
+		["title"] = "<a:RingingBell:1483429950190260305> Yeni Mesaj Geldi",
+		["description"] = "<a:mesaj2:1486681118303457421> **" .. player.Name .. ":** " .. message,
+		["color"] = 16711680,
+		["fields"] = {
+			{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat - Log Sistemi" }
+	}
+	sendLog(wb("chat"), embed)
+
+	-- Spam (skip for muted players)
+	if mutedPlayers[player] then return end
 	local now = tick()
 	if not playerChatCount[player] then
 		playerChatCount[player] = { count = 1, lastTime = now }
@@ -199,7 +235,55 @@ TextChatService.MessageReceived:Connect(function(textChatMessage)
 			end)
 		end
 	end
-end)
+
+	-- Filter
+	local cleaned = cleanText(message)
+	for _, word in ipairs(blockedWords) do
+		if string.find(cleaned, word) then
+			local embed = {
+				["title"] = "<a:dikkat:1508252116072796180> Live Anti-Cheat - Akilli Filtre Alarmi!",
+				["description"] = "<a:dikkat:1508252116072796180> **" .. player.Name .. "** isimli kullanici akilli filtreyi asmaya calisti!\n\n<:pause:1508253755315851385> **Yazilan Mesaj:** `" .. message .. "`",
+				["color"] = 16711680,
+				["fields"] = {
+					{ ["name"] = "<:uye:1508252675655995494> Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+					{ ["name"] = "<a:saat:1508253737431601243> Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				},
+				["footer"] = { ["text"] = "Live Anti-Cheat - Akilli Filtreleme" }
+			}
+			sendLog(wb("filter"), embed)
+			break
+		end
+	end
+
+	-- Adonis command
+	if string.sub(message, 1, 1) == ":" and #message > 2 then
+		local embed = {
+			["title"] = "<a:dikkat:1508252116072796180> Adonis Yetkili Komut Logu!",
+			["description"] = "<a:dikkat:1508252116072796180> **" .. player.Name .. "** isimli yetkili bir komut calistirdi!\n\n<:event:1508253224031748237> **Calistirilan Komut:** `" .. message .. "`",
+			["color"] = 3447003,
+			["fields"] = {
+				{ ["name"] = "<:uye:1508252675655995494> Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = "<a:saat:1508253737431601243> Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			},
+			["footer"] = { ["text"] = "Live Anti-Cheat - Adonis Koruma" }
+		}
+		sendLog(wb("adonis"), embed)
+	end
+end
+
+if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+	TextChatService.MessageReceived:Connect(function(msg)
+		local src = msg.TextSource
+		if not src then return end
+		handleChatMessage(Players:GetPlayerByUserId(src.UserId), msg.Text)
+	end)
+else
+	Players.PlayerAdded:Connect(function(player)
+		player.Chatted:Connect(function(message)
+			handleChatMessage(player, message)
+		end)
+	end)
+end
 
 Players.PlayerRemoving:Connect(function(player)
 	playerChatCount[player] = nil
@@ -349,28 +433,7 @@ Players.PlayerAdded:Connect(function(player)
 	end)
 end)
 
--- =====================================================================
--- CHAT LOG
--- =====================================================================
-TextChatService.MessageReceived:Connect(function(msg)
-	local src = msg.TextSource
-	if not src then return end
-	local player = Players:GetPlayerByUserId(src.UserId)
-	if not player then return end
-	local message = msg.Text
-	if #message < 1 then return end
-	local embed = {
-		["title"] = "<a:RingingBell:1483429950190260305> Yeni Mesaj Geldi",
-		["description"] = "<a:mesaj2:1486681118303457421> **" .. player.Name .. ":** " .. message,
-		["color"] = 16711680,
-		["fields"] = {
-			{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-		},
-		["footer"] = { ["text"] = "Live Anti-Cheat - Log Sistemi" }
-	}
-	sendLog(wb("chat"), embed)
-end)
+
 
 -- =====================================================================
 -- REMOTE SPAM
@@ -464,79 +527,7 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
--- =====================================================================
--- CHAT FILTER
--- =====================================================================
-local blockedWords = {
-	"amk", "sg", "orospu", "pic", "pic", "sik", "sik", "siktir", "aq", "oc", "oc",
-	"kahpe", "yarak", "yarrak", "meme", "got", "got", "amcik", "amcik", "dassak", "dalyarak",
-	"discordgg", "robloxcom", "sunucupatlatma"
-}
 
-local function cleanText(text)
-	text = string.lower(text)
-	text = string.gsub(text, "@", "a")
-	text = string.gsub(text, "0", "o")
-	text = string.gsub(text, "1", "i")
-	text = string.gsub(text, "3", "e")
-	text = string.gsub(text, "7", "t")
-	text = string.gsub(text, "[%s%p%c]", "")
-	local out, last = "", ""
-	for i = 1, #text do
-		local c = string.sub(text, i, i)
-		if c ~= last then out = out .. c; last = c end
-	end
-	return out
-end
-
-TextChatService.MessageReceived:Connect(function(msg)
-	local src = msg.TextSource
-	if not src then return end
-	local player = Players:GetPlayerByUserId(src.UserId)
-	if not player then return end
-	local message = msg.Text
-	local cleaned = cleanText(message)
-	for _, word in ipairs(blockedWords) do
-		if string.find(cleaned, word) then
-			local embed = {
-				["title"] = "<a:dikkat:1508252116072796180> Live Anti-Cheat - Akilli Filtre Alarmi!",
-				["description"] = "<a:dikkat:1508252116072796180> **" .. player.Name .. "** isimli kullanici akilli filtreyi asmaya calisti!\n\n<:pause:1508253755315851385> **Yazilan Mesaj:** `" .. message .. "`",
-				["color"] = 16711680,
-				["fields"] = {
-					{ ["name"] = "<:uye:1508252675655995494> Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-					{ ["name"] = "<a:saat:1508253737431601243> Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-				},
-				["footer"] = { ["text"] = "Live Anti-Cheat - Akilli Filtreleme" }
-			}
-			sendLog(wb("filter"), embed)
-			break
-		end
-	end
-end)
-
--- =====================================================================
--- ADONIS COMMAND LOG
--- =====================================================================
-TextChatService.MessageReceived:Connect(function(msg)
-	local src = msg.TextSource
-	if not src then return end
-	local player = Players:GetPlayerByUserId(src.UserId)
-	if not player then return end
-	local message = msg.Text
-	if string.sub(message, 1, 1) == ":" and #message > 2 then
-		local embed = {
-			["title"] = "<a:dikkat:1508252116072796180> Adonis Yetkili Komut Logu!",
-			["description"] = "<a:dikkat:1508252116072796180> **" .. player.Name .. "** isimli yetkili bir komut calistirdi!\n\n<:event:1508253224031748237> **Calistirilan Komut:** `" .. message .. "`",
-			["color"] = 3447003,
-			["fields"] = {
-				{ ["name"] = "<:uye:1508252675655995494> Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = "<a:saat:1508253737431601243> Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-			},
-			["footer"] = { ["text"] = "Live Anti-Cheat - Adonis Koruma" }
-		}
-		sendLog(wb("adonis"), embed)
-	end
-end)
 
 -- =====================================================================
 -- PERIODIC LICENSE CHECK (5 min)
