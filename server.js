@@ -34,27 +34,16 @@ async function checkLicense(key) {
 }
 
 function obfuscate(code) {
-  // Remove comments
   code = code.replace(/--\[\[[\s\S]*?\]\]/g, "");
   code = code.replace(/--.*$/gm, "");
-  code = code.replace(/\s+/g, " ");
-  code = code.replace(/\s*([=+\-*/,{}()\[\];.])\s*/g, "$1");
-  code = code.replace(/\s*([<>])\s*/g, "$1");
-  code = code.replace(/\s*(and|or|not|in)\s/g, " $1 ");
-  code = code.replace(/"([^"]*)"/g, (m, s) => {
+  code = code.replace(/\n\s*\n/g, "\n");
+  code = code.replace(/\s*([=+\-*\/,{}()\[\];.])\s*/g, "$1");
+  code = code.replace(/\b(for|while|if|then|else|elseif|do|end|return|function|local|in|repeat|until)\b/g, " $1 ");
+  code = code.replace(/("[^"]*")/g, (m) => {
+    const s = m.slice(1, -1);
     if (
-      s.includes("discord.com") ||
-      s.includes("onrender.com") ||
-      s.includes("firebase") ||
-      s.includes("api/webhook") ||
-      s.includes("license") ||
-      s.includes("License") ||
-      s.includes("lisans") ||
-      s.includes("Lisans") ||
-      s.includes("anticheat") ||
-      s.includes("Anti-Cheat") ||
-      s.includes("Live Anti-Cheat") ||
-      s.includes("Kick")
+      s.length > 5 &&
+      (/[A-Za-z]/.test(s) || /[çğıöşüÇĞİÖŞÜ]/.test(s))
     ) {
       const bytes = [];
       for (let i = 0; i < s.length; i++) {
@@ -64,16 +53,13 @@ function obfuscate(code) {
     }
     return m;
   });
-
-  // Add junk
+  code = code.replace(/(\b)[eE][nN][dD](\b)/g, "$1_end$2");
+  code = code.replace(/string\.char\(([^)]+)\)_end/g, "string.char($1)");
   const junkVar = "_" + Math.random().toString(36).substr(2, 6);
-  code = `local ${junkVar}=0;${code}`;
-  code = code.replace(/local function/g, ` ${junkVar}=${junkVar}+1;local function`);
-
-  code = code.replace(/\n+/g, " ");
+  code = `local ${junkVar}=0 ${code}`;
+  code = code.replace(/local function/g, ` ${junkVar}=${junkVar}+1 local function`);
   code = code.replace(/\s{2,}/g, " ");
-
-  return code;
+  return code.trim();
 }
 
 app.get("/loader", async (req, res) => {
