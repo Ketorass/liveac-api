@@ -41,15 +41,16 @@ function obfuscate(code) {
   code = code.replace(/\b(for|while|if|then|elseif|else|do|end|return|function|local|in|repeat|until)\b/g, " $1 ");
   code = code.replace(/("[^"]*")/g, (m) => {
     const s = m.slice(1, -1);
-    if (
-      s.length > 5 &&
-      (/[A-Za-z]/.test(s) || /[çğıöşüÇĞİÖŞÜ]/.test(s))
-    ) {
+    if (s.length > 5 && /[A-Za-z\u00c0-\u024f\u0400-\u04ff]/.test(s)) {
       const bytes = [];
+      let hasUnicode = false;
       for (let i = 0; i < s.length; i++) {
-        bytes.push(s.charCodeAt(i));
+        const c = s.charCodeAt(i);
+        bytes.push(c);
+        if (c > 255) hasUnicode = true;
       }
-      return `string.char(${bytes.join(",")})`;
+      const fn = hasUnicode ? "utf8.char" : "string.char";
+      return `${fn}(${bytes.join(",")})`;
     }
     return m;
   });
