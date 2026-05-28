@@ -53,8 +53,6 @@ function obfuscate(code) {
     }
     return m;
   });
-  code = code.replace(/(\b)[eE][nN][dD](\b)/g, "$1_end$2");
-  code = code.replace(/string\.char\(([^)]+)\)_end/g, "string.char($1)");
   const junkVar = "_" + Math.random().toString(36).substr(2, 6);
   code = `local ${junkVar}=0 ${code}`;
   code = code.replace(/local function/g, ` ${junkVar}=${junkVar}+1 local function`);
