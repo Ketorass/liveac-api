@@ -1,4 +1,6 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const app = express();
 
 const FIREBASE_URL = "https://liveac-database-default-rtdb.europe-west1.firebasedatabase.app";
@@ -8,29 +10,41 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/loader", async (req, res) => {
-  const key = req.query.key;
-  if (!key || typeof key !== "string") return res.send("INVALID");
-
+async function checkLicense(key) {
+  if (!key || typeof key !== "string") return "INVALID";
   try {
     const resp = await fetch(
       `${FIREBASE_URL}/LicenceKeys/${encodeURIComponent(key)}.json`
     );
-    if (!resp.ok) return res.send("INVALID");
-
+    if (!resp.ok) return "INVALID";
     const data = await resp.json();
-    if (!data) return res.send("INVALID");
-
+    if (!data) return "INVALID";
     const active = data.Active === true || data.Active === "true";
-    if (!active) return res.send("INVALID");
-
+    if (!active) return "INVALID";
     const now = Math.floor(Date.now() / 1000);
     const expire = Number(data.ExpireDays || 0) * 86400;
     const start = Number(data.StartTime || 0);
+    if (start > 0 && now > start + expire) return "EXPIRED";
+    return "OK";
+  } catch {
+    return "INVALID";
+  }
+}
 
-    if (start > 0 && now > start + expire) return res.send("EXPIRED");
+app.get("/loader", async (req, res) => {
+  res.send(await checkLicense(req.query.key));
+});
 
-    res.send("OK");
+app.get("/anticheat", async (req, res) => {
+  const status = await checkLicense(req.query.key);
+  if (status !== "OK") return res.send(status);
+
+  try {
+    let code = fs.readFileSync(
+      path.join(__dirname, "anticheat.lua"),
+      "utf8"
+    );
+    res.send(code);
   } catch {
     res.send("INVALID");
   }
