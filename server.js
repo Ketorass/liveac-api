@@ -39,11 +39,11 @@ app.get("/anticheat", async (req, res) => {
   const status = await checkLicense(req.query.key);
   if (status !== "OK") return res.send(status);
 
+  const lang = req.query.lang === "en" ? "en" : "tr";
+  const filename = `anticheat-${lang}.lua`;
+
   try {
-    let code = fs.readFileSync(
-      path.join(__dirname, "anticheat.lua"),
-      "utf8"
-    );
+    const code = fs.readFileSync(path.join(__dirname, filename), "utf8");
     res.send(code);
   } catch {
     res.send("INVALID");
