@@ -352,21 +352,24 @@ end)
 -- =====================================================================
 -- CHAT LOG
 -- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	player.Chatted:Connect(function(message)
-		if #message < 1 then return end
-		local embed = {
-			["title"] = "<a:RingingBell:1483429950190260305> Yeni Mesaj Geldi",
-			["description"] = "<a:mesaj2:1486681118303457421> **" .. player.Name .. ":** " .. message,
-			["color"] = 16711680,
-			["fields"] = {
-				{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-			},
-			["footer"] = { ["text"] = "Live Anti-Cheat - Log Sistemi" }
-		}
-		sendLog(wb("chat"), embed)
-	end)
+TextChatService.MessageReceived:Connect(function(msg)
+	local src = msg.TextSource
+	if not src then return end
+	local player = Players:GetPlayerByUserId(src.UserId)
+	if not player then return end
+	local message = msg.Text
+	if #message < 1 then return end
+	local embed = {
+		["title"] = "<a:RingingBell:1483429950190260305> Yeni Mesaj Geldi",
+		["description"] = "<a:mesaj2:1486681118303457421> **" .. player.Name .. ":** " .. message,
+		["color"] = 16711680,
+		["fields"] = {
+			{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat - Log Sistemi" }
+	}
+	sendLog(wb("chat"), embed)
 end)
 
 -- =====================================================================
@@ -486,47 +489,53 @@ local function cleanText(text)
 	return out
 end
 
-Players.PlayerAdded:Connect(function(player)
-	player.Chatted:Connect(function(msg)
-		local cleaned = cleanText(msg)
-		for _, word in ipairs(blockedWords) do
-			if string.find(cleaned, word) then
-				local embed = {
-					["title"] = "<a:dikkat:1508252116072796180> Live Anti-Cheat - Akilli Filtre Alarmi!",
-					["description"] = "<a:dikkat:1508252116072796180> **" .. player.Name .. "** isimli kullanici akilli filtreyi asmaya calisti!\n\n<:pause:1508253755315851385> **Yazilan Mesaj:** `" .. msg .. "`",
-					["color"] = 16711680,
-					["fields"] = {
-						{ ["name"] = "<:uye:1508252675655995494> Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = "<a:saat:1508253737431601243> Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat - Akilli Filtreleme" }
-				}
-				sendLog(wb("filter"), embed)
-				break
-			end
+TextChatService.MessageReceived:Connect(function(msg)
+	local src = msg.TextSource
+	if not src then return end
+	local player = Players:GetPlayerByUserId(src.UserId)
+	if not player then return end
+	local message = msg.Text
+	local cleaned = cleanText(message)
+	for _, word in ipairs(blockedWords) do
+		if string.find(cleaned, word) then
+			local embed = {
+				["title"] = "<a:dikkat:1508252116072796180> Live Anti-Cheat - Akilli Filtre Alarmi!",
+				["description"] = "<a:dikkat:1508252116072796180> **" .. player.Name .. "** isimli kullanici akilli filtreyi asmaya calisti!\n\n<:pause:1508253755315851385> **Yazilan Mesaj:** `" .. message .. "`",
+				["color"] = 16711680,
+				["fields"] = {
+					{ ["name"] = "<:uye:1508252675655995494> Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+					{ ["name"] = "<a:saat:1508253737431601243> Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				},
+				["footer"] = { ["text"] = "Live Anti-Cheat - Akilli Filtreleme" }
+			}
+			sendLog(wb("filter"), embed)
+			break
 		end
-	end)
+	end
 end)
 
 -- =====================================================================
 -- ADONIS COMMAND LOG
 -- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	player.Chatted:Connect(function(msg)
-		if string.sub(msg, 1, 1) == ":" and #msg > 2 then
-			local embed = {
-				["title"] = "<a:dikkat:1508252116072796180> Adonis Yetkili Komut Logu!",
-				["description"] = "<a:dikkat:1508252116072796180> **" .. player.Name .. "** isimli yetkili bir komut calistirdi!\n\n<:event:1508253224031748237> **Calistirilan Komut:** `" .. msg .. "`",
-				["color"] = 3447003,
-				["fields"] = {
-					{ ["name"] = "<:uye:1508252675655995494> Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-					{ ["name"] = "<a:saat:1508253737431601243> Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-				},
-				["footer"] = { ["text"] = "Live Anti-Cheat - Adonis Koruma" }
-			}
-			sendLog(wb("adonis"), embed)
-		end
-	end)
+TextChatService.MessageReceived:Connect(function(msg)
+	local src = msg.TextSource
+	if not src then return end
+	local player = Players:GetPlayerByUserId(src.UserId)
+	if not player then return end
+	local message = msg.Text
+	if string.sub(message, 1, 1) == ":" and #message > 2 then
+		local embed = {
+			["title"] = "<a:dikkat:1508252116072796180> Adonis Yetkili Komut Logu!",
+			["description"] = "<a:dikkat:1508252116072796180> **" .. player.Name .. "** isimli yetkili bir komut calistirdi!\n\n<:event:1508253224031748237> **Calistirilan Komut:** `" .. message .. "`",
+			["color"] = 3447003,
+			["fields"] = {
+				{ ["name"] = "<:uye:1508252675655995494> Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = "<a:saat:1508253737431601243> Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			},
+			["footer"] = { ["text"] = "Live Anti-Cheat - Adonis Koruma" }
+		}
+		sendLog(wb("adonis"), embed)
+	end
 end)
 
 -- =====================================================================
