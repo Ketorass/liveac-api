@@ -24,7 +24,8 @@ async function checkLicense(key) {
     const now = Math.floor(Date.now() / 1000);
     const expire = Number(data.ExpireDays || 0) * 86400;
     const start = Number(data.StartTime || 0);
-    if (start > 0 && now > start + expire) return "EXPIRED";
+    const effectiveStart = start > 0 ? start : now;
+    if (expire > 0 && now > effectiveStart + expire) return "EXPIRED";
     return "OK";
   } catch {
     return "INVALID";
