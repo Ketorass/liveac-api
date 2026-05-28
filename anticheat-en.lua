@@ -44,6 +44,7 @@ local WB = {
 	tps = "",              -- performance alerts
 	shutdown = "",         -- server shutdown log
 	invis = "",            -- invisibility detection
+	vehicle = "",          -- vehicle enter/exit logs
 }
 
 local function wb(n)
@@ -136,6 +137,31 @@ Players.PlayerRemoving:Connect(function(player)
 		{ ["name"] = "Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
 		{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 	})
+end)
+
+-- =====================================================================
+-- VEHICLE TRACKING
+-- =====================================================================
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(character)
+		local humanoid = character:WaitForChild("Humanoid")
+		humanoid.Seated:Connect(function(active, seat)
+			if active and seat then
+				local vehicle = seat.Parent
+				local vehicleName = vehicle and vehicle.Name or "Unknown"
+				local seatType = seat:IsA("VehicleSeat") and "Driver" or "Passenger"
+				sendLog(wb("vehicle"), "Vehicle Enter", "**" .. player.Name .. "** entered a vehicle.\n**Vehicle:** `" .. vehicleName .. "`\n**Seat:** `" .. seatType .. "`", 3447003, {
+					{ ["name"] = "Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+					{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				})
+			elseif not active then
+				sendLog(wb("vehicle"), "Vehicle Exit", "**" .. player.Name .. "** exited a vehicle.", 3447003, {
+					{ ["name"] = "Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+					{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				})
+			end
+		end)
+	end)
 end)
 
 -- =====================================================================

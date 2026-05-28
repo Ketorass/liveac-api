@@ -45,9 +45,10 @@ function obfuscate(code) {
       const bytes = [];
       let hasUnicode = false;
       for (let i = 0; i < s.length; i++) {
-        const c = s.charCodeAt(i);
+        const c = s.codePointAt(i);
         bytes.push(c);
         if (c > 255) hasUnicode = true;
+        if (c > 0xFFFF) i++;
       }
       const fn = hasUnicode ? "utf8.char" : "string.char";
       return `${fn}(${bytes.join(",")})`;
