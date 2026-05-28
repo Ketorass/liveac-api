@@ -66,6 +66,8 @@ local function sendLog(webhook, title, desc, color, fields)
 	pcall(function() HttpService:PostAsync(webhook, HttpService:JSONEncode(data)) end)
 end
 
+-- ====================== CONFIG_END ======================
+
 -- =====================================================================
 -- TELEPORT / SPEED HACK
 -- =====================================================================

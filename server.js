@@ -77,7 +77,12 @@ app.get("/anticheat", async (req, res) => {
     let code = fs.readFileSync(path.join(__dirname, filename), "utf8");
     code = code.replace(/local LICENSE_KEY = "[^"]*"/, `local LICENSE_KEY = "${req.query.key}"`);
     if (req.query.obfuscate === "true") {
-      code = obfuscate(code);
+      const parts = code.split("-- ====================== CONFIG_END ======================");
+      if (parts.length === 2) {
+        code = parts[0].trim() + "\n\n" + obfuscate(parts[1]);
+      } else {
+        code = obfuscate(code);
+      }
     }
     res.send(code);
   } catch {
