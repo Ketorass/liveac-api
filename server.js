@@ -38,7 +38,7 @@ function obfuscate(code) {
   code = code.replace(/--.*$/gm, "");
   code = code.replace(/\n\s*\n/g, "\n");
   code = code.replace(/\s*([=+\-*\/,{}()\[\];.])\s*/g, "$1");
-  code = code.replace(/\b(for|while|if|then|else|elseif|do|end|return|function|local|in|repeat|until)\b/g, " $1 ");
+  code = code.replace(/\b(for|while|if|then|elseif|else|do|end|return|function|local|in|repeat|until)\b/g, " $1 ");
   code = code.replace(/("[^"]*")/g, (m) => {
     const s = m.slice(1, -1);
     if (
