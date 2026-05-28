@@ -1,70 +1,39 @@
 const express = require("express");
-const axios = require("axios");
-
 const app = express();
 
-const FIREBASE_URL =
-  "https://liveac-database-default-rtdb.europe-west1.firebasedatabase.app";
+const FIREBASE_URL = "https://liveac-database-default-rtdb.europe-west1.firebasedatabase.app";
+
+app.use((req, res, next) => {
+  res.type("text/plain");
+  next();
+});
 
 app.get("/loader", async (req, res) => {
   const key = req.query.key;
-
-  console.log("GELEN KEY:", key);
-
-  if (!key) {
-    return res.send("game:Shutdown()");
-  }
+  if (!key || typeof key !== "string") return res.send("INVALID");
 
   try {
-    const result = await axios.get(
-      `${FIREBASE_URL}/LicenceKeys/${key}.json`
+    const resp = await fetch(
+      `${FIREBASE_URL}/LicenceKeys/${encodeURIComponent(key)}.json`
     );
+    if (!resp.ok) return res.send("INVALID");
 
-    const data = result.data;
+    const data = await resp.json();
+    if (!data) return res.send("INVALID");
 
-    console.log("FIREBASE RESPONSE:", data);
-
-    // ❌ key yoksa
-    if (!data) {
-      return res.send("game:Shutdown()");
-    }
-
-    // ❌ Active kontrolü (daha sağlam)
-    if (data.Active !== true) {
-      return res.send("game:Shutdown()");
-    }
+    const active = data.Active === true || data.Active === "true";
+    if (!active) return res.send("INVALID");
 
     const now = Math.floor(Date.now() / 1000);
+    const expire = Number(data.ExpireDays || 0) * 86400;
+    const start = Number(data.StartTime || 0);
 
-    const start = Number(data.StartTime);
-    const expireDays = Number(data.ExpireDays);
+    if (start > 0 && now > start + expire) return res.send("EXPIRED");
 
-    // ❌ bozuk veri kontrolü
-    if (!start || !expireDays) {
-      return res.send("game:Shutdown()");
-    }
-
-    const expireTime = start + expireDays * 86400;
-
-    if (now >= expireTime) {
-      return res.send("game:Shutdown()");
-    }
-
-    // ✅ Lua loader output
-    const luaScript = `
-print("Live Anti-Cheat Loaded")
-
--- loader OK
-`;
-
-    return res.type("text/plain").send(luaScript);
-
-  } catch (err) {
-    console.error("ERROR:", err.message);
-    return res.send("game:Shutdown()");
+    res.send("OK");
+  } catch {
+    res.send("INVALID");
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server çalışıyor: http://localhost:3000");
-});
+app.listen(process.env.PORT || 3000);
