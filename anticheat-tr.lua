@@ -83,10 +83,12 @@ local function sendLog(webhook, embed)
 	local data = { ["embeds"] = { embed } }
 	local json = HttpService:JSONEncode(data)
 	warn("[Live-AC] Sending POST to Discord, length:", #json)
-	local ok, err = pcall(function()
-		HttpService:PostAsync(webhook, json)
+	task.spawn(function()
+		local ok, err = pcall(function()
+			HttpService:PostAsync(webhook, json)
+		end)
+		if ok then warn("[Live-AC] POST success") else warn("[Live-AC] POST failed:", err) end
 	end)
-	if ok then warn("[Live-AC] POST success") else warn("[Live-AC] POST failed:", err) end
 end
 
 -- =====================================================================
