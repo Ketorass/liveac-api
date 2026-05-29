@@ -65,7 +65,7 @@ end
 -- =====================================================================
 Players.PlayerRemoving:Connect(function(player)
 	local embed = {
-		["title"] = "🔴 Çıkış",
+		["title"] = "🔴 Live Anti-Cheat ・ Çıkış Log",
 		["color"] = 16711680,
 		["fields"] = {
 			{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -114,7 +114,7 @@ local function handleChatMessage(player, message)
 
 	-- Chat log
 	local embed = {
-		["title"] = "💬 Yeni Mesaj",
+		["title"] = "💬 Live Anti-Cheat ・ Mesaj Log",
 		["color"] = 16711680,
 		["fields"] = {
 			{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -141,7 +141,7 @@ local function handleChatMessage(player, message)
 		if stats.count > SPAM_LIMIT then
 			mutedPlayers[player] = true
 			local embed = {
-				["title"] = "🚨 Spam Tespiti",
+				["title"] = "🚨 Live Anti-Cheat ・ Spam Log",
 				["color"] = 16711680,
 				["fields"] = {
 					{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -165,7 +165,7 @@ local function handleChatMessage(player, message)
 	for _, word in ipairs(blockedWords) do
 		if string.find(cleaned, word) then
 			local embed = {
-				["title"] = "🚨 Filtre Alarmı",
+				["title"] = "🚨 Live Anti-Cheat ・ Filtre Log",
 				["color"] = 16711680,
 				["fields"] = {
 					{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -182,7 +182,7 @@ local function handleChatMessage(player, message)
 	-- Adonis command
 	if string.sub(message, 1, 1) == ":" and #message > 2 then
 		local embed = {
-			["title"] = "⚡ Yetkili Komut",
+			["title"] = "⚡ Live Anti-Cheat ・ Yetkili Log",
 			["color"] = 3447003,
 			["fields"] = {
 				{ ["name"] = "👤 Yetkili", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
@@ -223,7 +223,7 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	local embed = {
-		["title"] = "🚨 Anti-Cheat Tespiti",
+		["title"] = "🚨 Live Anti-Cheat ・ Tespit Log",
 		["color"] = 16711680,
 		["fields"] = {
 			{ ["name"] = "👤 Oyuncu", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
@@ -253,7 +253,7 @@ local function setupPlayer(player)
 	-- New account protection
 	if player.AccountAge < MIN_ACCOUNT_AGE then
 		local embed = {
-			["title"] = "🚨 Yeni Hesap Engeli",
+			["title"] = "🚨 Live Anti-Cheat ・ Hesap Log",
 			["color"] = 16711680,
 			["fields"] = {
 				{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -270,7 +270,7 @@ local function setupPlayer(player)
 
 	-- Join log
 	local embed = {
-		["title"] = "🟢 Giriş",
+		["title"] = "🟢 Live Anti-Cheat ・ Giriş Log",
 		["color"] = 65280,
 		["fields"] = {
 			{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -296,7 +296,7 @@ local function setupPlayer(player)
 			local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Araç"
 			if active and seat then
 				local embed = {
-					["title"] = "🚗 Araç Girişi",
+					["title"] = "🚗 Live Anti-Cheat ・ Araç Log",
 					["color"] = 3447003,
 					["fields"] = {
 						{ ["name"] = "👤 Oyuncu", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
@@ -309,7 +309,7 @@ local function setupPlayer(player)
 				sendLog(wb("vehicle"), embed)
 			elseif not active then
 				local embed = {
-					["title"] = "🚶 Araç Çıkışı",
+					["title"] = "🚶 Live Anti-Cheat ・ Araç Log",
 					["color"] = 3447003,
 					["fields"] = {
 						{ ["name"] = "👤 Oyuncu", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
@@ -354,7 +354,7 @@ local function setupPlayer(player)
 				if part:IsA("BasePart") and part.Transparency >= 0.98 then
 					loggedPlayers[player.UserId] = true
 					local embed = {
-						["title"] = "👁️ Anti-Cheat: Görünmezlik Tespiti",
+						["title"] = "👁️ Live Anti-Cheat ・ Görünmezlik Log",
 						["color"] = 16711680,
 						["fields"] = {
 							{ ["name"] = "👤 Oyuncu", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
@@ -392,7 +392,7 @@ local function setupPlayer(player)
 				local dmg = lastHealth - newHealth
 				if dmg > 2 then
 				local embed = {
-					["title"] = "🩸 Hasar",
+					["title"] = "🩸 Live Anti-Cheat ・ Hasar Log",
 					["color"] = 10038562,
 					["fields"] = {
 						{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -421,7 +421,7 @@ local function setupPlayer(player)
 			table.insert(fields, { ["name"] = "📝 Detay", ["value"] = killer and "**" .. killer.Name .. "** → **" .. player.Name .. "**" or "Kendi kendine öldü / intihar", ["inline"] = false })
 			table.insert(fields, { ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true })
 			local embed = {
-				["title"] = "💀 Ölüm",
+				["title"] = "💀 Live Anti-Cheat ・ Ölüm Log",
 				["color"] = 16711680,
 				["fields"] = fields,
 				["footer"] = { ["text"] = "Live Anti-Cheat • Kill Sistemi" }
@@ -462,7 +462,7 @@ local function attachRemote(remote)
 				for _, v in ipairs(args) do table.insert(strs, tostring(v)) end
 				local finalArgs = #strs > 0 and table.concat(strs, ", ") or "Veri Yok"
 			local embed = {
-				["title"] = "🚨 Remote Spam",
+				["title"] = "🚨 Live Anti-Cheat ・ Remote Log",
 				["color"] = 16711680,
 				["fields"] = {
 					{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -492,7 +492,7 @@ game:BindToClose(function()
 	local count = #Players:GetPlayers()
 	task.wait(2.5)
 	local embed = {
-		["title"] = "🔌 Sunucu Kapanıyor",
+		["title"] = "🔌 Live Anti-Cheat ・ Kapanış Log",
 		["color"] = 16711680,
 		["fields"] = {
 			{ ["name"] = "👤 Oyuncu Sayısı", ["value"] = "**" .. count .. "** oyuncu çevrimiçiydi", ["inline"] = false },
@@ -520,7 +520,7 @@ RunService.Heartbeat:Connect(function()
 		if tps < TPS_LIMIT and (now - lastTPSLog) > 30 then
 			lastTPSLog = now
 			local embed = {
-				["title"] = "🚨 Sunucu Lag Tespit Edildi",
+				["title"] = "🚨 Live Anti-Cheat ・ Performans Log",
 				["color"] = 16711680,
 				["fields"] = {
 					{ ["name"] = "⚡ Anlık TPS", ["value"] = "**" .. math.floor(tps) .. "** / 60", ["inline"] = true },

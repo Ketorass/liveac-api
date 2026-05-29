@@ -65,7 +65,7 @@ end
 -- =====================================================================
 Players.PlayerRemoving:Connect(function(player)
 	local embed = {
-		["title"] = "🔴 Leave",
+		["title"] = "🔴 Live Anti-Cheat ・ Leave Log",
 		["color"] = 16711680,
 		["fields"] = {
 			{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -116,7 +116,7 @@ local function handleChatMessage(player, message)
 
 	-- Chat log
 	local embed = {
-		["title"] = "💬 New Message",
+		["title"] = "💬 Live Anti-Cheat ・ Chat Log",
 		["color"] = 16711680,
 		["fields"] = {
 			{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -143,7 +143,7 @@ local function handleChatMessage(player, message)
 		if stats.count > SPAM_LIMIT then
 			mutedPlayers[player] = true
 			local embed = {
-				["title"] = "🚨 Spam Detected",
+				["title"] = "🚨 Live Anti-Cheat ・ Spam Log",
 				["color"] = 16711680,
 				["fields"] = {
 					{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -167,7 +167,7 @@ local function handleChatMessage(player, message)
 	for _, word in ipairs(blockedWords) do
 		if string.find(cleaned, word) then
 			local embed = {
-				["title"] = "🚨 Filter Alert",
+				["title"] = "🚨 Live Anti-Cheat ・ Filter Log",
 				["color"] = 16711680,
 				["fields"] = {
 					{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -184,7 +184,7 @@ local function handleChatMessage(player, message)
 	-- Adonis command
 	if string.sub(message, 1, 1) == ":" and #message > 2 then
 		local embed = {
-			["title"] = "⚡ Admin Command",
+			["title"] = "⚡ Live Anti-Cheat ・ Admin Log",
 			["color"] = 3447003,
 			["fields"] = {
 				{ ["name"] = "👤 Admin", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
@@ -227,7 +227,7 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	local embed = {
-		["title"] = "🚨 Anti-Cheat Detection",
+		["title"] = "🚨 Live Anti-Cheat ・ Detection Log",
 		["color"] = 16711680,
 		["fields"] = {
 			{ ["name"] = "👤 Player", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -251,7 +251,7 @@ local function setupPlayer(player)
 	-- New account protection
 	if player.AccountAge < MIN_ACCOUNT_AGE then
 		local embed = {
-			["title"] = "🚨 New Account Blocked",
+			["title"] = "🚨 Live Anti-Cheat ・ Account Log",
 			["color"] = 16711680,
 			["fields"] = {
 				{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -268,7 +268,7 @@ local function setupPlayer(player)
 
 	-- Join log
 	local embed = {
-		["title"] = "🟢 Join",
+		["title"] = "🟢 Live Anti-Cheat ・ Join Log",
 		["color"] = 65280,
 		["fields"] = {
 			{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -294,7 +294,7 @@ local function setupPlayer(player)
 			local vehicleName = vehicle and vehicle.Name or "Unknown Vehicle"
 			if active and seat then
 				local embed = {
-					["title"] = "🚗 Vehicle Enter",
+					["title"] = "🚗 Live Anti-Cheat ・ Vehicle Log",
 					["color"] = 3447003,
 					["fields"] = {
 						{ ["name"] = "👤 Player", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
@@ -307,7 +307,7 @@ local function setupPlayer(player)
 				sendLog(wb("vehicle"), embed)
 			elseif not active then
 				local embed = {
-					["title"] = "🚶 Vehicle Exit",
+					["title"] = "🚶 Live Anti-Cheat ・ Vehicle Log",
 					["color"] = 3447003,
 					["fields"] = {
 						{ ["name"] = "👤 Player", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
@@ -352,7 +352,7 @@ local function setupPlayer(player)
 				if part:IsA("BasePart") and part.Transparency >= 0.98 then
 					loggedPlayers[player.UserId] = true
 					local embed = {
-						["title"] = "👁️ Invisibility Detected",
+						["title"] = "👁️ Live Anti-Cheat ・ Invisibility Log",
 						["color"] = 16711680,
 						["fields"] = {
 							{ ["name"] = "👤 Player", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -391,7 +391,7 @@ local function setupPlayer(player)
 				local dmg = lastHealth - newHealth
 				if dmg > 2 then
 				local embed = {
-					["title"] = "🩸 Damage",
+					["title"] = "🩸 Live Anti-Cheat ・ Damage Log",
 					["color"] = 10038562,
 					["fields"] = {
 						{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -420,7 +420,7 @@ local function setupPlayer(player)
 			table.insert(fields, { ["name"] = "📝 Detail", ["value"] = killer and "**" .. killer.Name .. "** → **" .. player.Name .. "**" or "Suicide / Self-inflicted", ["inline"] = false })
 			table.insert(fields, { ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true })
 			local embed = {
-				["title"] = "💀 Death",
+				["title"] = "💀 Live Anti-Cheat ・ Death Log",
 				["color"] = 16711680,
 				["fields"] = fields,
 				["footer"] = { ["text"] = "Live Anti-Cheat • Kill System" }
@@ -461,7 +461,7 @@ local function attachRemote(remote)
 				for _, v in ipairs(args) do table.insert(strs, tostring(v)) end
 				local finalArgs = #strs > 0 and table.concat(strs, ", ") or "No Data"
 			local embed = {
-				["title"] = "🚨 Remote Spam",
+				["title"] = "🚨 Live Anti-Cheat ・ Remote Log",
 				["color"] = 16711680,
 				["fields"] = {
 					{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
@@ -491,7 +491,7 @@ game:BindToClose(function()
 	local count = #Players:GetPlayers()
 	task.wait(2.5)
 	local embed = {
-		["title"] = "🔌 Server Shutdown",
+		["title"] = "🔌 Live Anti-Cheat ・ Shutdown Log",
 		["color"] = 16711680,
 		["fields"] = {
 			{ ["name"] = "👤 Players Online", ["value"] = "**" .. count .. "** player(s) were online", ["inline"] = false },
@@ -519,7 +519,7 @@ RunService.Heartbeat:Connect(function()
 		if tps < TPS_LIMIT and (now - lastTPSLog) > 30 then
 			lastTPSLog = now
 			local embed = {
-				["title"] = "🚨 Server Lag Detected",
+				["title"] = "🚨 Live Anti-Cheat ・ Performance Log",
 				["color"] = 16711680,
 				["fields"] = {
 					{ ["name"] = "⚡ Current TPS", ["value"] = "**" .. math.floor(tps) .. "** / 60", ["inline"] = true },
