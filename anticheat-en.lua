@@ -79,13 +79,12 @@ local emoji = {
 -- DISCORD LOG SENDER
 -- =====================================================================
 local function sendLog(webhook, embed)
-	if webhook == "" then warn("[Live-AC] Webhook empty, skipping") return end
-	local data = { ["content"] = embed.title or "Log", ["embeds"] = { embed } }
-	local json = HttpService:JSONEncode(data)
+	if webhook == "" then warn("[Live-AC] Webhook empty") return end
+	local data = { ["content"] = "Live Anti-Cheat Alert", ["embeds"] = { embed } }
+	local ok, json = pcall(HttpService.JSONEncode, HttpService, data)
+	if not ok then warn("[Live-AC] JSON error") return end
 	task.spawn(function()
-		pcall(function()
-			HttpService:PostAsync(webhook, json)
-		end)
+		pcall(HttpService.PostAsync, HttpService, webhook, json, "application/json")
 	end)
 end
 
@@ -123,7 +122,7 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
-	local wh = wb("anticheat")
+	local wh = config.main
 	local embed = {
 		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
 		["color"] = 16711680,
