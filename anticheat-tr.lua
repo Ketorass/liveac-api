@@ -130,14 +130,12 @@ local function HandleViolation(player, reason, value)
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
 	local embed = {
-		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
+		["title"] = emoji.kan .. " Live Anti-Cheat: " .. reason,
 		["description"] = emoji.bell .. " **" .. player.Name .. "** sunucuda şüpheli hareketler tespit edildi!\n\n" ..
 			emoji.uye .. " **Oyuncu:** " .. player.Name .. "\n" ..
-			emoji.pause .. " **Hile Türü:** " .. reason .. "\n" ..
-			emoji.event .. " **Detay:** " .. value .. "\n" ..
-			emoji.saat .. " **Zaman:** " .. os.date("%H:%M:%S"),
-		["color"] = 16711680,
-		["footer"] = { ["text"] = "Live Anti-Cheat • Güvenlik Modülü" }
+			emoji.saat .. " **Detay:** " .. value .. "\n" ..
+			emoji.oldu .. " **Zaman:** " .. os.date("%H:%M:%S"),
+		["color"] = 16711680
 	}
 	sendLog(wb("damage"), embed)
 	AlertEvent:FireClient(player)
