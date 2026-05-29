@@ -31,17 +31,16 @@ print("[Live Anti-Cheat] Lisans geçerli - Anti-Cheat başlatılıyor...")
 -- Her modül için ayrı webhook URL'si girin
 -- Boş bırakılanlar main'e düşer
 local config = {
-	main = "",        -- Ana webhook (diğerleri boşsa bu kullanılır)
-	joinleave = "",   -- Oyuncu giriş/çıkış logları
-	anticheat = "",   -- Hız/uçuş/şüpheli hareket logları
-	spam = "",        -- Spam mesaj logları (kullanılmıyor)
-	chat = "",        -- Sohbet mesaj logları
-	damage = "",      -- Hasar takip logları
-	remote = "",      -- Remote event spam koruma logları
-	filter = "",      -- Küfür/yasaklı kelime filtre logları
-	adonis = "",      -- Adonis yetkili komut logları
-	tps = "",         -- Sunucu TPS/performans uyarı logları
-	shutdown = "",    -- Sunucu kapanış logları
+	main = "https://discord.com/api/webhooks/1508895939522203701/GgLEmaZazl9heX-PQxBjwCVmf1Hw3l23sIoZ2koF0tCrS3OlKom5f42ch7T1vsbqzfzQ",        -- Ana webhook (diğerleri boşsa bu kullanılır)
+	joinleave = "https://discord.com/api/webhooks/1508553878973583471/xVFa9ZNwtEL3OT14A4s7FQuO90OVnU79J4kmcovQC-JnmbP5csytagjb3Za6BG5z77Ce",   -- Oyuncu giriş/çıkış logları
+	anticheat = "https://discord.com/api/webhooks/1509898010589528164/m2NtMh-nkh_CLTVKwVxHcW7HNZG_uVSsm27f2jPtvCwf_50XwEdAdbg0cRB_OOf2ta4v",   -- Hız/uçuş/şüpheli hareket logları
+	chat = "https://discord.com/api/webhooks/1509898182711185570/E34Jt-P5DoY0-SOpiSNsOoytI0nyb94TfIjCudsqvgsf4YJhOZcFN99vvdo-DCdQYpXU",        -- Sohbet mesaj logları
+	damage = "https://discord.com/api/webhooks/1509898415906099200/0LlnA1NVp_IoeYin72pTbUh3vCAH_0jHyp7xq2ql4zXLBSzrIZnvHOl4joedjvTrnU3K",      -- Hasar takip logları
+	remote = "https://discord.com/api/webhooks/1509898486995488848/Pr4kIN-7-8shypZZEk39SBzeuIZF1RIj3kwZD6eBRNXAuwHiFqXaHv32qGgZrIdAF4Bz",      -- Remote event spam koruma logları
+	filter = "https://discord.com/api/webhooks/1509698589910106143/hdw2nJDTtockRqJoFiphFXl54l1JNCFlPC5AeCE4BL_rDWt1G9Iu-jMITilNxormhacA",      -- Küfür/yasaklı kelime filtre logları
+	adonis = "https://discord.com/api/webhooks/1509898562287308931/hW7fZ4STpk-Ze_En0AcsvZdf-cGBUAIF_2Dv96TfLUbzQKdRB2Rrs7VYwRm2lZ_oPVGF",      -- Adonis yetkili komut logları
+	tps = "https://discord.com/api/webhooks/1509898615353643120/um6k08hfqXpol8c8zhYWHjnGu9cc_BZ0OltpbUxCGoig0X_tre4A5rDUMJUlPf0SFVrl",         -- Sunucu TPS/performans uyarı logları
+	shutdown = "https://discord.com/api/webhooks/1509898773592145981/xFUrhkjwuKRbp30DfAFyQyEiC2U46mBKP4Ae0rPGEAioRKnhdjhuKnhLRtmO43vmNhoO",    -- Sunucu kapanış logları
 }
 
 local function wb(n)
@@ -196,6 +195,63 @@ local function setupPlayer(player)
 		["footer"] = { ["text"] = "Live Anti-Cheat • Giriş Sistemi" }
 	}
 	sendLog(wb("joinleave"), embed)
+
+	-- Anti-Dex / Yasaklı Araç Koruması
+	local yasakliIsimler = { "dex", "injector", "esp", "aimbot", "remotespy", "remote spy", "cheat", "wallet", "loadstring", "darkdex", "dex explorer", "exploit", "krnl", "synapse", "scriptware" }
+	local function araclariTara(container)
+		for _, obj in ipairs(container:GetChildren()) do
+			local ad = string.lower(obj.Name)
+			for _, y in ipairs(yasakliIsimler) do
+				if string.find(ad, y) then
+					local embed = {
+						["title"] = emoji.dikkat .. " Live Anti-Cheat - Yasaklı Araç Tespit!",
+						["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı yasaklı bir araç açtı veya kopyalama başlattı!\n\n" ..
+							emoji.pause .. " **Tespit Edilen:** `" .. obj.Name .. "`\n" ..
+							emoji.event .. " **Konum:** `" .. tostring(container) .. "`",
+						["color"] = 16711680,
+						["fields"] = {
+							{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+							{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+						},
+						["footer"] = { ["text"] = "Live Anti-Cheat • Anti-Exploit" }
+					}
+					sendLog(wb("anticheat"), embed)
+					return true
+				end
+			end
+		end
+		return false
+	end
+	task.spawn(function()
+		while player.Parent do
+			local bp = player:FindFirstChild("Backpack")
+			local pg = player:FindFirstChild("PlayerGui")
+			if bp then araclariTara(bp) end
+			if pg then araclariTara(pg) end
+			task.wait(5)
+		end
+	end)
+	player.DescendantAdded:Connect(function(obj)
+		local ad = string.lower(obj.Name)
+		for _, y in ipairs(yasakliIsimler) do
+			if string.find(ad, y) then
+				local embed = {
+					["title"] = emoji.dikkat .. " Live Anti-Cheat - Yasaklı Araç Tespit!",
+					["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı yasaklı bir araç açtı veya kopyalama başlattı!\n\n" ..
+						emoji.pause .. " **Tespit Edilen:** `" .. obj.Name .. "`\n" ..
+						emoji.event .. " **Konum:** `" .. tostring(obj.Parent) .. "`",
+					["color"] = 16711680,
+					["fields"] = {
+						{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Anti-Exploit" }
+				}
+				sendLog(wb("anticheat"), embed)
+				break
+			end
+		end
+	end)
 
 	-- Chatted (legacy)
 	player.Chatted:Connect(function(message)

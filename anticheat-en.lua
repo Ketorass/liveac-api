@@ -31,17 +31,16 @@ print("[Live Anti-Cheat] License valid - Starting anti-cheat...")
 -- Enter a separate webhook URL for each module
 -- Empty entries fall back to main
 local config = {
-	main = "",        -- Default webhook (used when others are empty)
-	joinleave = "",   -- Player join/leave logs
-	anticheat = "",   -- Speed/fly/suspicious movement logs
-	spam = "",        -- Spam message logs (not in use)
-	chat = "",        -- Chat message logs
-	damage = "",      -- Damage tracking logs
-	remote = "",      -- Remote event spam protection logs
-	filter = "",      -- Profanity/banned word filter logs
-	adonis = "",      -- Adonis admin command logs
-	tps = "",         -- Server TPS/performance warning logs
-	shutdown = "",    -- Server shutdown logs
+	main = "https://discord.com/api/webhooks/1508895939522203701/GgLEmaZazl9heX-PQxBjwCVmf1Hw3l23sIoZ2koF0tCrS3OlKom5f42ch7T1vsbqzfzQ",        -- Default webhook (used when others are empty)
+	joinleave = "https://discord.com/api/webhooks/1508553878973583471/xVFa9ZNwtEL3OT14A4s7FQuO90OVnU79J4kmcovQC-JnmbP5csytagjb3Za6BG5z77Ce",   -- Player join/leave logs
+	anticheat = "https://discord.com/api/webhooks/1509898010589528164/m2NtMh-nkh_CLTVKwVxHcW7HNZG_uVSsm27f2jPtvCwf_50XwEdAdbg0cRB_OOf2ta4v",   -- Speed/fly/suspicious movement logs
+	chat = "https://discord.com/api/webhooks/1509898182711185570/E34Jt-P5DoY0-SOpiSNsOoytI0nyb94TfIjCudsqvgsf4YJhOZcFN99vvdo-DCdQYpXU",        -- Chat message logs
+	damage = "https://discord.com/api/webhooks/1509898415906099200/0LlnA1NVp_IoeYin72pTbUh3vCAH_0jHyp7xq2ql4zXLBSzrIZnvHOl4joedjvTrnU3K",      -- Damage tracking logs
+	remote = "https://discord.com/api/webhooks/1509898486995488848/Pr4kIN-7-8shypZZEk39SBzeuIZF1RIj3kwZD6eBRNXAuwHiFqXaHv32qGgZrIdAF4Bz",      -- Remote event spam protection logs
+	filter = "https://discord.com/api/webhooks/1509698589910106143/hdw2nJDTtockRqJoFiphFXl54l1JNCFlPC5AeCE4BL_rDWt1G9Iu-jMITilNxormhacA",      -- Profanity/banned word filter logs
+	adonis = "https://discord.com/api/webhooks/1509898562287308931/hW7fZ4STpk-Ze_En0AcsvZdf-cGBUAIF_2Dv96TfLUbzQKdRB2Rrs7VYwRm2lZ_oPVGF",      -- Adonis admin command logs
+	tps = "https://discord.com/api/webhooks/1509898615353643120/um6k08hfqXpol8c8zhYWHjnGu9cc_BZ0OltpbUxCGoig0X_tre4A5rDUMJUlPf0SFVrl",         -- Server TPS/performance warning logs
+	shutdown = "https://discord.com/api/webhooks/1509898773592145981/xFUrhkjwuKRbp30DfAFyQyEiC2U46mBKP4Ae0rPGEAioRKnhdjhuKnhLRtmO43vmNhoO",    -- Server shutdown logs
 }
 
 local function wb(n)
@@ -194,6 +193,63 @@ local function setupPlayer(player)
 		["footer"] = { ["text"] = "Live Anti-Cheat • Join System" }
 	}
 	sendLog(wb("joinleave"), embed)
+
+	-- Anti-Dex / Banned Tool Protection
+	local bannedNames = { "dex", "injector", "esp", "aimbot", "remotespy", "remote spy", "cheat", "wallet", "loadstring", "darkdex", "dex explorer", "exploit", "krnl", "synapse", "scriptware" }
+	local function scanTools(container)
+		for _, obj in ipairs(container:GetChildren()) do
+			local name = string.lower(obj.Name)
+			for _, b in ipairs(bannedNames) do
+				if string.find(name, b) then
+					local embed = {
+						["title"] = emoji.dikkat .. " Live Anti-Cheat - Banned Tool Detected!",
+						["description"] = emoji.dikkat .. " **" .. player.Name .. "** opened a banned tool or started copying!\n\n" ..
+							emoji.pause .. " **Detected:** `" .. obj.Name .. "`\n" ..
+							emoji.event .. " **Location:** `" .. tostring(container) .. "`",
+						["color"] = 16711680,
+						["fields"] = {
+							{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+							{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+						},
+						["footer"] = { ["text"] = "Live Anti-Cheat • Anti-Exploit" }
+					}
+					sendLog(wb("anticheat"), embed)
+					return true
+				end
+			end
+		end
+		return false
+	end
+	task.spawn(function()
+		while player.Parent do
+			local bp = player:FindFirstChild("Backpack")
+			local pg = player:FindFirstChild("PlayerGui")
+			if bp then scanTools(bp) end
+			if pg then scanTools(pg) end
+			task.wait(5)
+		end
+	end)
+	player.DescendantAdded:Connect(function(obj)
+		local name = string.lower(obj.Name)
+		for _, b in ipairs(bannedNames) do
+			if string.find(name, b) then
+				local embed = {
+					["title"] = emoji.dikkat .. " Live Anti-Cheat - Banned Tool Detected!",
+					["description"] = emoji.dikkat .. " **" .. player.Name .. "** opened a banned tool or started copying!\n\n" ..
+						emoji.pause .. " **Detected:** `" .. obj.Name .. "`\n" ..
+						emoji.event .. " **Location:** `" .. tostring(obj.Parent) .. "`",
+					["color"] = 16711680,
+					["fields"] = {
+						{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Anti-Exploit" }
+				}
+				sendLog(wb("anticheat"), embed)
+				break
+			end
+		end
+	end)
 
 	-- Chatted (legacy)
 	player.Chatted:Connect(function(message)
