@@ -281,7 +281,7 @@ local function setupPlayer(player)
 	end)
 
 	-- All character-based modules
-	player.CharacterAdded:Connect(function(character)
+	local function setupCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
 		local root = character:WaitForChild("HumanoidRootPart")
 
@@ -400,7 +400,12 @@ local function setupPlayer(player)
 			}
 			sendLog(wb("kill"), embed)
 		end)
-	end)
+	end
+
+	player.CharacterAdded:Connect(setupCharacter)
+	if player.Character then
+		setupCharacter(player.Character)
+	end
 end
 
 for _, player in ipairs(Players:GetPlayers()) do setupPlayer(player) end
