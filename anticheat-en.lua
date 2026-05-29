@@ -362,7 +362,7 @@ local function setupPlayer(player)
 							emoji.saat .. " **Time:** " .. os.date("%H:%M:%S"),
 						["color"] = 10038562
 					}
-					sendLog(wb("damage"), embed)
+	sendLog(config.main, embed)
 				end
 			end
 			lastHealth = newHealth
