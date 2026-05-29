@@ -79,14 +79,14 @@ local emoji = {
 -- DISCORD LOG GÖNDERME
 -- =====================================================================
 local function sendLog(webhook, embed)
-	if webhook == "" then return end
+	if webhook == "" then warn("[Live-AC] Webhook empty, skipping") return end
 	local data = { ["embeds"] = { embed } }
 	local json = HttpService:JSONEncode(data)
-	task.spawn(function()
-		pcall(function()
-			HttpService:PostAsync(webhook, json)
-		end)
+	warn("[Live-AC] Sending POST to Discord, length:", #json)
+	local ok, err = pcall(function()
+		HttpService:PostAsync(webhook, json)
 	end)
+	if ok then warn("[Live-AC] POST success") else warn("[Live-AC] POST failed:", err) end
 end
 
 -- =====================================================================
@@ -122,6 +122,9 @@ local function HandleViolation(player, reason, value)
 	if not data or os.clock() < data.NextAlert then return end
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
+	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
+	local wh = wb("anticheat")
+	warn("[Live-AC] Webhook:", wh)
 	local embed = {
 		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
 		["color"] = 16711680,
@@ -132,7 +135,7 @@ local function HandleViolation(player, reason, value)
 			emoji.saat .. " **Zaman**\n" .. os.date("%H:%M:%S"),
 		["footer"] = { ["text"] = "Live Anti-Cheat • Güvenlik Modülü" }
 	}
-	sendLog(wb("anticheat"), embed)
+	sendLog(wh, embed)
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
