@@ -280,29 +280,13 @@ local function setupPlayer(player)
 			end
 		end)
 
-		-- Damage
+		-- Damage + Kill
 		local lastHealth = humanoid.Health
-		humanoid.HealthChanged:Connect(function(newHealth)
-			if newHealth < lastHealth then
-				local dmg = lastHealth - newHealth
-				if dmg > 2 then
-					local embed = {
-						["title"] = emoji.kan .. " Live System - Damage Tracking",
-						["description"] = emoji.bell .. " **Damage Log**\n\n" ..
-							emoji.uye .. " **Player:** " .. player.Name .. "\n" ..
-							emoji.oldu .. " **Damage:** " .. math.floor(dmg) .. "\n" ..
-							emoji.web .. " **Health:** " .. math.floor(newHealth) .. "\n" ..
-							emoji.saat .. " **Time:** " .. os.date("%H:%M:%S"),
-						["color"] = 10038562
-					}
-					sendLog(wb("damage"), embed)
-				end
-			end
-			lastHealth = newHealth
-		end)
-
-		-- Kill
-		humanoid.Died:Connect(function()
+		local killFired = false
+		local function fireKill()
+			if killFired then return end
+			killFired = true
+			task.wait(0.1)
 			local tag = humanoid:FindFirstChild("creator")
 			local killer = tag and tag.Value or nil
 			local desc = killer and (emoji.bicak .. " **" .. killer.Name .. "** killed **" .. player.Name .. "**!") or (emoji.oldu .. " **" .. player.Name .. "** died or committed suicide.")
@@ -319,6 +303,26 @@ local function setupPlayer(player)
 				["footer"] = { ["text"] = "Live Anti-Cheat • Kill System" }
 			}
 			sendLog(wb("kill"), embed)
+		end
+		humanoid.Died:Connect(fireKill)
+		humanoid.HealthChanged:Connect(function(newHealth)
+			if newHealth <= 0 and lastHealth > 0 then fireKill() end
+			if newHealth < lastHealth then
+				local dmg = lastHealth - newHealth
+				if dmg > 2 then
+					local embed = {
+						["title"] = emoji.kan .. " Live System - Damage Tracking",
+						["description"] = emoji.bell .. " **Damage Log**\n\n" ..
+							emoji.uye .. " **Player:** " .. player.Name .. "\n" ..
+							emoji.oldu .. " **Damage:** " .. math.floor(dmg) .. "\n" ..
+							emoji.web .. " **Health:** " .. math.floor(newHealth) .. "\n" ..
+							emoji.saat .. " **Time:** " .. os.date("%H:%M:%S"),
+						["color"] = 10038562
+					}
+					sendLog(wb("damage"), embed)
+				end
+			end
+			if newHealth > 0 then lastHealth = newHealth end
 		end)
 	end
 
