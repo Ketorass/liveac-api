@@ -119,7 +119,7 @@ local AlertEvent = Instance.new("RemoteEvent", ReplicatedStorage)
 AlertEvent.Name = "LiveAlertEvent"
 local SETTINGS = {
 	MAX_WALK_SPEED = 110, MAX_VEHICLE_SPEED = 750, FLIGHT_THRESHOLD = 5,
-	COOLDOWN_TIME = 1, KICK_THRESHOLD = 1, TICK_RATE = 0.5, WHITELIST = {}
+	COOLDOWN_TIME = 8, KICK_THRESHOLD = 3, TICK_RATE = 0.5, WHITELIST = {}
 }
 local SESSION_DATA = {}
 
