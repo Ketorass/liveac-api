@@ -119,7 +119,7 @@ local AlertEvent = Instance.new("RemoteEvent", ReplicatedStorage)
 AlertEvent.Name = "LiveAlertEvent"
 local SETTINGS = {
 	MAX_WALK_SPEED = 110, MAX_VEHICLE_SPEED = 750, FLIGHT_THRESHOLD = 5,
-	COOLDOWN_TIME = 8, KICK_THRESHOLD = 3, TICK_RATE = 0.5, WHITELIST = {}
+	COOLDOWN_TIME = 1, KICK_THRESHOLD = 1, TICK_RATE = 0.5, WHITELIST = {}
 }
 local SESSION_DATA = {}
 
@@ -129,7 +129,19 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
-	local payload = { ["content"] = "**Anti-Cheat Alert** " .. player.Name .. " " .. reason .. " " .. value }
+	local embed = {
+		["title"] = "Live Anti-Cheat: Cheat Detected",
+		["description"] = "**" .. player.Name .. "** detected with suspicious movements!",
+		["color"] = 16711680,
+		["fields"] = {
+			{ ["name"] = "Cheat Type", ["value"] = "`" .. reason .. "`", ["inline"] = true },
+			{ ["name"] = "Detail", ["value"] = "`" .. value .. "`", ["inline"] = true },
+			{ ["name"] = "Player", ["value"] = "`" .. player.Name .. "` (`" .. player.UserId .. "`)", ["inline"] = true },
+			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat" }
+	}
+	local payload = { ["content"] = "**Anti-Cheat Alert:** " .. player.Name .. " [" .. reason .. "]", ["embeds"] = { embed } }
 	local ok, json = pcall(HttpService.JSONEncode, HttpService, payload)
 	if ok then
 		task.spawn(function()
