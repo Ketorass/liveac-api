@@ -140,7 +140,8 @@ local function HandleViolation(player, reason, value)
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Güvenlik Modülü" }
 	}
-	sendLog(wb("anticheat"), embed)
+	sendSimple(config.main, "**Anti-Cheat Alert** " .. player.Name .. ": " .. reason .. " (" .. value .. ")")
+	sendLog(config.main, embed)
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
