@@ -31,20 +31,20 @@ print("[Live Anti-Cheat] Lisans geçerli - Anti-Cheat başlatılıyor...")
 -- Her modül için ayrı webhook URL'si girin
 -- Boş bırakılanlar main'e düşer
 local config = {
-	main = "",
-	joinleave = "",
-	anticheat = "",
-	spam = "",
-	chat = "",
-	kill = "",
-	damage = "",
-	remote = "",
-	filter = "",
-	adonis = "",
-	tps = "",
-	shutdown = "",
-	invis = "",
-	vehicle = "",
+	main = "",        -- Ana webhook (diğerleri boşsa bu kullanılır)
+	joinleave = "",   -- Oyuncu giriş/çıkış logları
+	anticheat = "",   -- Hız/uçuş/şüpheli hareket logları
+	spam = "",        -- Spam mesaj logları (kullanılmıyor)
+	chat = "",        -- Sohbet mesaj logları
+	kill = "",        -- Ölüm/öldürme logları
+	damage = "",      -- Hasar takip logları
+	remote = "",      -- Remote event spam koruma logları
+	filter = "",      -- Küfür/yasaklı kelime filtre logları
+	adonis = "",      -- Adonis yetkili komut logları
+	tps = "",         -- Sunucu TPS/performans uyarı logları
+	shutdown = "",    -- Sunucu kapanış logları
+	invis = "",       -- Görünmezlik tespit logları (kullanılmıyor)
+	vehicle = "",     -- Araç giriş/çıkış logları
 }
 
 local function wb(n)

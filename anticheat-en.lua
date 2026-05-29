@@ -31,20 +31,20 @@ print("[Live Anti-Cheat] License valid - Starting anti-cheat...")
 -- Enter a separate webhook URL for each module
 -- Empty entries fall back to main
 local config = {
-	main = "",
-	joinleave = "",
-	anticheat = "",
-	spam = "",
-	chat = "",
-	kill = "",
-	damage = "",
-	remote = "",
-	filter = "",
-	adonis = "",
-	tps = "",
-	shutdown = "",
-	invis = "",
-	vehicle = "",
+	main = "",        -- Default webhook (used when others are empty)
+	joinleave = "",   -- Player join/leave logs
+	anticheat = "",   -- Speed/fly/suspicious movement logs
+	spam = "",        -- Spam message logs (not in use)
+	chat = "",        -- Chat message logs
+	kill = "",        -- Death/kill logs
+	damage = "",      -- Damage tracking logs
+	remote = "",      -- Remote event spam protection logs
+	filter = "",      -- Profanity/banned word filter logs
+	adonis = "",      -- Adonis admin command logs
+	tps = "",         -- Server TPS/performance warning logs
+	shutdown = "",    -- Server shutdown logs
+	invis = "",       -- Invisibility detection logs (not in use)
+	vehicle = "",     -- Vehicle enter/exit logs
 }
 
 local function wb(n)
