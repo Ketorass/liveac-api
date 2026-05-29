@@ -348,25 +348,41 @@ local function setupPlayer(player)
 		end)
 
 		-- Invisibility
+		local bodyParts = { "Head", "Torso", "UpperTorso", "LowerTorso", "HumanoidRootPart", "LeftArm", "RightArm", "LeftLeg", "RightLeg" }
 		local function checkInvis()
 			if loggedPlayers[player.UserId] then return end
-			for _, part in pairs(character:GetDescendants()) do
+			local found = false
+			for _, part in pairs(character:GetChildren()) do
 				if part:IsA("BasePart") and part.Transparency >= 0.98 then
-					loggedPlayers[player.UserId] = true
-					local embed = {
-						["title"] = "👁️ Live Anti-Cheat ・ Görünmezlik Log",
-						["color"] = 16711680,
-						["fields"] = {
-							{ ["name"] = "👤 Oyuncu", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
-							{ ["name"] = "📋 Parça", ["value"] = part.Name, ["inline"] = true },
-							{ ["name"] = "🔍 Şeffaflık", ["value"] = math.floor(part.Transparency * 100) .. "%", ["inline"] = true },
-						},
-						["footer"] = { ["text"] = "Live Anti-Cheat | " .. os.date("%H:%M:%S") }
-					}
-					sendLog(wb("invis"), embed)
-					task.delay(30, function() loggedPlayers[player.UserId] = nil end)
-					break
+					for _, bp in ipairs(bodyParts) do
+						if part.Name == bp then found = true; break end
+					end
 				end
+			end
+			if found then
+				loggedPlayers[player.UserId] = true
+				local embed = {
+					["title"] = "👁️ Live Anti-Cheat ・ Görünmezlik Log",
+					["color"] = 16711680,
+					["fields"] = {
+						{ ["name"] = "👤 Oyuncu", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+						{ ["name"] = "🔍 Tespit", ["value"] = "Vücut parçaları şeffaf", ["inline"] = false },
+						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Görünmezlik" }
+				}
+				sendLog(wb("invis"), embed)
+				task.delay(30, function() loggedPlayers[player.UserId] = nil end)
+			end
+		end
+		checkInvis()
+		for _, part in pairs(character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part:GetPropertyChangedSignal("Transparency"):Connect(function()
+					if part.Transparency >= 0.98 then checkInvis() end
+				end)
+			end
+		end
 			end
 		end
 		checkInvis()

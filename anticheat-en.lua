@@ -346,26 +346,41 @@ local function setupPlayer(player)
 		end)
 
 		-- Invisibility
+		local bodyParts = { "Head", "Torso", "UpperTorso", "LowerTorso", "HumanoidRootPart", "LeftArm", "RightArm", "LeftLeg", "RightLeg" }
 		local function checkInvis()
 			if loggedPlayers[player.UserId] then return end
-			for _, part in pairs(character:GetDescendants()) do
+			local found = false
+			for _, part in pairs(character:GetChildren()) do
 				if part:IsA("BasePart") and part.Transparency >= 0.98 then
-					loggedPlayers[player.UserId] = true
-					local embed = {
-						["title"] = "👁️ Live Anti-Cheat ・ Invisibility Log",
-						["color"] = 16711680,
-						["fields"] = {
-							{ ["name"] = "👤 Player", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-							{ ["name"] = "📋 Part", ["value"] = part.Name, ["inline"] = true },
-							{ ["name"] = "🔍 Transparency", ["value"] = "**" .. math.floor(part.Transparency * 100) .. "%**", ["inline"] = true },
-							{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-						},
-						["footer"] = { ["text"] = "Live Anti-Cheat • Invisibility" }
-					}
-					sendLog(wb("invis"), embed)
-					task.delay(30, function() loggedPlayers[player.UserId] = nil end)
-					break
+					for _, bp in ipairs(bodyParts) do
+						if part.Name == bp then found = true; break end
+					end
 				end
+			end
+			if found then
+				loggedPlayers[player.UserId] = true
+				local embed = {
+					["title"] = "👁️ Live Anti-Cheat ・ Invisibility Log",
+					["color"] = 16711680,
+					["fields"] = {
+						{ ["name"] = "👤 Player", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+						{ ["name"] = "🔍 Detection", ["value"] = "Body parts are transparent", ["inline"] = false },
+						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Invisibility" }
+				}
+				sendLog(wb("invis"), embed)
+				task.delay(30, function() loggedPlayers[player.UserId] = nil end)
+			end
+		end
+		checkInvis()
+		for _, part in pairs(character:GetChildren()) do
+			if part:IsA("BasePart") then
+				part:GetPropertyChangedSignal("Transparency"):Connect(function()
+					if part.Transparency >= 0.98 then checkInvis() end
+				end)
+			end
+		end
 			end
 		end
 		checkInvis()
