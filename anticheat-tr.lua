@@ -128,13 +128,19 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
-	local msg = "**" .. emoji.dikkat .. " Live Anti-Cheat: Cheat Detected**\n" ..
-		emoji.uye .. " **Oyuncu:** " .. player.Name .. " (" .. player.UserId .. ")\n" ..
-		emoji.pause .. " **Hile:** " .. reason .. "\n" ..
-		emoji.event .. " **Detay:** " .. value .. "\n" ..
-		emoji.saat .. " **Zaman:** " .. os.date("%H:%M:%S") .. "\n" ..
-		emoji.bell .. " **Tespit Sayısı:** " .. data.Violations
-	sendSimple(config.main, msg)
+	local embed = {
+		["title"] = "Live Anti-Cheat: Cheat Detected",
+		["color"] = 16711680,
+		["fields"] = {
+			{ ["name"] = "Oyuncu", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = true },
+			{ ["name"] = "Hile Türü", ["value"] = reason, ["inline"] = true },
+			{ ["name"] = "Detay", ["value"] = value, ["inline"] = false },
+			{ ["name"] = "Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true },
+			{ ["name"] = "Tespit Sayısı", ["value"] = tostring(data.Violations), ["inline"] = true }
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat" }
+	}
+	sendLog(config.main, embed)
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
