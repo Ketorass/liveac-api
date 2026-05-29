@@ -61,19 +61,20 @@ local emoji = {
 	saat = "<:saat:1508253712685072514>",
 	event = "<:event:1508253201223258152>",
 	bell = "<a:RingingBell:1509931849730887750>",
-	join = "<a:join:1486684147970871472>",
+	join = "<:join:1509938049004605480>",
 	leave = "<:leave:1509928987780972685>",
-	vehicle_in = "<a:bye_car_blank_bearish:1486689158947803267>",
+	vehicle_in = "<a:bye_car_blank_bearish:1509937025917391049>",
 	vehicle_out = "<a:q_peperun:1486689348203319457>",
 	alarm = "<a:alarm:1465818655697932330>",
-	id = "<:id:1486640503243018323>",
+	ids = "<:ids:1509938656780222556>",
 	rules = "<:ruleslogs:1486691313633067018>",
-	kan = "<:damlacik_kan:1491091955038556192>",
+	kan = "<:damlacik_kan:1509937451853025430>",
 	oldu = "<a:eddead:1486686805439811594>",
 	web = "<:web:1486640325681348699>",
-	bicak = "<:pepeKnife:1486686549767753738>",
+	bicak = "<:pepeKnife:1509938429540958418>",
 	mesaj = "<:chat:1509931912188264542>",
 	loading = "<a:LiveLoading:1483077755032834249>",
+	coins = "<:coins:1509939039430639657>",
 }
 
 -- ====================== CONFIG_END ======================
@@ -141,14 +142,7 @@ end
 -- =====================================================================
 -- PLAYER SETUP
 -- =====================================================================
-local loggedPlayers = {}
 local MIN_ACCOUNT_AGE = 3
-local playerChatCount = {}
-local mutedPlayers = {}
-local SPAM_LIMIT = 5
-local MUTE_TIME = 60
-local spamNotifyEvent = Instance.new("RemoteEvent", ReplicatedStorage)
-spamNotifyEvent.Name = "SpamNotifyEvent"
 
 local blockedWords = {
 	"discordgg", "robloxcom", "crashserver"
@@ -221,42 +215,6 @@ local function setupPlayer(player)
 		}
 		sendLog(wb("chat"), embed)
 
-		-- Spam
-		if mutedPlayers[player] then return end
-		local now = tick()
-		if not playerChatCount[player] then
-			playerChatCount[player] = { count = 1, lastTime = now }
-		else
-			local stats = playerChatCount[player]
-			if now - stats.lastTime < 2 then
-				stats.count += 1
-			else
-				stats.count = 1
-				stats.lastTime = now
-			end
-			if stats.count > SPAM_LIMIT then
-				mutedPlayers[player] = true
-				local embed = {
-					["title"] = emoji.dikkat .. " Live Anti-Cheat - Chat Mute!",
-					["description"] = emoji.dikkat .. " **" .. player.Name .. "** typed too fast and has been muted!\n\n" ..
-						emoji.pause .. " **Messages/sec:** `" .. stats.count .. "/" .. SPAM_LIMIT .. "`\n" ..
-						emoji.pause .. " **Penalty:** `" .. MUTE_TIME .. " Seconds`",
-					["color"] = 16711680,
-					["fields"] = {
-						{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat • Chat Protection" }
-				}
-				sendLog(wb("spam"), embed)
-				spamNotifyEvent:FireClient(player)
-				task.delay(MUTE_TIME, function()
-					mutedPlayers[player] = nil
-					if playerChatCount[player] then playerChatCount[player].count = 0 end
-				end)
-			end
-		end
-
 		-- Filter
 		local cleaned = cleanText(message)
 		for _, word in ipairs(blockedWords) do
@@ -309,7 +267,7 @@ local function setupPlayer(player)
 					["title"] = emoji.dikkat .. " Live Anti-Cheat - Vehicle Movement!",
 					["description"] = emoji.vehicle_in .. " **" .. player.Name .. "** got into a vehicle.\n\n" ..
 						emoji.event .. " **Vehicle:** `" .. vehicleName .. "`\n" ..
-						emoji.id .. " **Seat:** `" .. seatType .. "`",
+						emoji.ids .. " **Seat:** `" .. seatType .. "`",
 					["color"] = 3447003,
 					["fields"] = {
 						{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
@@ -355,38 +313,6 @@ local function setupPlayer(player)
 					else SESSION_DATA[player].VerticalTick = 0 end
 				end
 				SESSION_DATA[player].LastPos = cp
-			end
-		end)
-
-		-- Invisibility
-		local visibleParts = { "Head", "Torso", "UpperTorso", "LowerTorso", "LeftArm", "RightArm", "LeftLeg", "RightLeg" }
-		task.spawn(function()
-			while character.Parent do
-				task.wait(10)
-				if not loggedPlayers[player.UserId] then
-					for _, part in pairs(character:GetChildren()) do
-						if part:IsA("BasePart") then
-							for _, bp in ipairs(visibleParts) do
-								if part.Name == bp and part.Transparency >= 0.98 then
-									loggedPlayers[player.UserId] = true
-									local embed = {
-										["title"] = emoji.loading .. " Live System - Invisibility Cheat Detect",
-										["description"] = emoji.alarm .. " **Invisibility Check**\n\n" ..
-											emoji.uye .. " **Player:** " .. player.Name .. "\n" ..
-											emoji.id .. " **ID:** " .. player.UserId .. "\n" ..
-											emoji.rules .. " **Detail:** Hidden Part (" .. part.Name .. ")\n" ..
-											emoji.saat .. " **Time:** " .. os.date("%H:%M:%S"),
-										["color"] = 16711680
-									}
-									sendLog(wb("invis"), embed)
-									task.delay(30, function() loggedPlayers[player.UserId] = nil end)
-									break
-								end
-							end
-							if loggedPlayers[player.UserId] then break end
-						end
-					end
-				end
 			end
 		end)
 
@@ -440,7 +366,7 @@ end
 
 for _, player in ipairs(Players:GetPlayers()) do setupPlayer(player) end
 Players.PlayerAdded:Connect(setupPlayer)
-Players.PlayerRemoving:Connect(function(p) SESSION_DATA[p] = nil; playerChatCount[p] = nil; mutedPlayers[p] = nil end)
+Players.PlayerRemoving:Connect(function(p) SESSION_DATA[p] = nil end)
 
 -- =====================================================================
 -- REMOTE SPAM
