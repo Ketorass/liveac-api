@@ -36,7 +36,6 @@ local config = {
 	anticheat = "",   -- Speed/fly/suspicious movement logs
 	spam = "",        -- Spam message logs (not in use)
 	chat = "",        -- Chat message logs
-	kill = "",        -- Death/kill logs
 	damage = "",      -- Damage tracking logs
 	remote = "",      -- Remote event spam protection logs
 	filter = "",      -- Profanity/banned word filter logs
@@ -280,33 +279,9 @@ local function setupPlayer(player)
 			end
 		end)
 
-		-- Damage + Kill
+		-- Damage
 		local lastHealth = humanoid.Health
-		local killFired = false
-		local function fireKill()
-			if killFired then return end
-			killFired = true
-			warn("[Live-AC] Kill detected:", player.Name)
-			local tag = humanoid:FindFirstChild("creator")
-			local killer = tag and tag.Value or nil
-			local desc = killer and (emoji.bicak .. " **" .. killer.Name .. "** killed **" .. player.Name .. "**!") or (emoji.oldu .. " **" .. player.Name .. "** died or committed suicide.")
-			local fields = {
-				{ ["name"] = emoji.uye .. " Profile (Victim)", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-			}
-			if killer then table.insert(fields, 2, { ["name"] = emoji.uye .. " Profile (Killer)", ["value"] = "Name: `" .. killer.Name .. "`\nID: `" .. killer.UserId .. "`", ["inline"] = true }) end
-			local embed = {
-				["title"] = emoji.bell .. " New Death Event",
-				["description"] = desc,
-				["color"] = 16711680,
-				["fields"] = fields,
-				["footer"] = { ["text"] = "Live Anti-Cheat • Kill System" }
-			}
-			sendLog(wb("kill"), embed)
-		end
-		humanoid.Died:Connect(fireKill)
 		humanoid.HealthChanged:Connect(function(newHealth)
-			if newHealth <= 0 and lastHealth > 0 then fireKill() end
 			if newHealth < lastHealth then
 				local dmg = lastHealth - newHealth
 				if dmg > 2 then
@@ -322,12 +297,7 @@ local function setupPlayer(player)
 					sendLog(wb("damage"), embed)
 				end
 			end
-			if newHealth > 0 then lastHealth = newHealth end
-		end)
-		character.AncestryChanged:Connect(function()
-			if not character:IsDescendantOf(game) then
-				fireKill()
-			end
+			lastHealth = newHealth
 		end)
 	end
 

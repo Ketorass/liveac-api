@@ -36,7 +36,6 @@ local config = {
 	anticheat = "",   -- Hız/uçuş/şüpheli hareket logları
 	spam = "",        -- Spam mesaj logları (kullanılmıyor)
 	chat = "",        -- Sohbet mesaj logları
-	kill = "",        -- Ölüm/öldürme logları
 	damage = "",      -- Hasar takip logları
 	remote = "",      -- Remote event spam koruma logları
 	filter = "",      -- Küfür/yasaklı kelime filtre logları
@@ -282,33 +281,9 @@ local function setupPlayer(player)
 			end
 		end)
 
-		-- Damage + Kill
+		-- Damage
 		local lastHealth = humanoid.Health
-		local killFired = false
-		local function fireKill()
-			if killFired then return end
-			killFired = true
-			warn("[Live-AC] Kill tespit edildi:", player.Name)
-			local tag = humanoid:FindFirstChild("creator")
-			local killer = tag and tag.Value or nil
-			local desc = killer and (emoji.bicak .. " **" .. killer.Name .. "** isimli oyuncu, **" .. player.Name .. "** isimli oyuncuyu kesti!") or (emoji.oldu .. " **" .. player.Name .. "** kendi kendine öldü veya intihar etti.")
-			local fields = {
-				{ ["name"] = emoji.uye .. " Profil (Ölen)", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-			}
-			if killer then table.insert(fields, 2, { ["name"] = emoji.uye .. " Profil (Katil)", ["value"] = "İsim: `" .. killer.Name .. "`\nID: `" .. killer.UserId .. "`", ["inline"] = true }) end
-			local embed = {
-				["title"] = emoji.bell .. " Yeni Ölüm Olayı",
-				["description"] = desc,
-				["color"] = 16711680,
-				["fields"] = fields,
-				["footer"] = { ["text"] = "Live Anti-Cheat • Kill Sistemi" }
-			}
-			sendLog(wb("kill"), embed)
-		end
-		humanoid.Died:Connect(fireKill)
 		humanoid.HealthChanged:Connect(function(newHealth)
-			if newHealth <= 0 and lastHealth > 0 then fireKill() end
 			if newHealth < lastHealth then
 				local dmg = lastHealth - newHealth
 				if dmg > 2 then
@@ -324,12 +299,7 @@ local function setupPlayer(player)
 					sendLog(wb("damage"), embed)
 				end
 			end
-			if newHealth > 0 then lastHealth = newHealth end
-		end)
-		character.AncestryChanged:Connect(function()
-			if not character:IsDescendantOf(game) then
-				fireKill()
-			end
+			lastHealth = newHealth
 		end)
 	end
 
