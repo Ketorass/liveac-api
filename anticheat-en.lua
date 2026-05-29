@@ -271,19 +271,17 @@ local function handleChatMessage(player, message)
 	end
 end
 
-if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
-	TextChatService.MessageReceived:Connect(function(msg)
-		local src = msg.TextSource
-		if not src then return end
-		handleChatMessage(Players:GetPlayerByUserId(src.UserId), msg.Text)
+TextChatService.MessageReceived:Connect(function(msg)
+	local src = msg.TextSource
+	if not src then return end
+	handleChatMessage(Players:GetPlayerByUserId(src.UserId), msg.Text)
+end)
+
+Players.PlayerAdded:Connect(function(player)
+	player.Chatted:Connect(function(message)
+		handleChatMessage(player, message)
 	end)
-else
-	Players.PlayerAdded:Connect(function(player)
-		player.Chatted:Connect(function(message)
-			handleChatMessage(player, message)
-		end)
-	end)
-end
+end)
 
 Players.PlayerRemoving:Connect(function(player)
 	playerChatCount[player] = nil
