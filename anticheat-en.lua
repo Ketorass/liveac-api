@@ -138,7 +138,17 @@ local function HandleViolation(player, reason, value)
 		["footer"] = { ["text"] = "Live Anti-Cheat • Security Module" }
 	}
 	sendLog(wb("damage"), dmgEmbed)
-	sendLog(config.main, { ["title"] = "Anti-Cheat Alert", ["description"] = "**" .. player.Name .. "** " .. reason .. " (" .. value .. ")", ["color"] = 16711680 })
+	sendLog(config.main, {
+		["title"] = "Anti-Cheat Alert",
+		["color"] = 16711680,
+		["fields"] = {
+			{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = true },
+			{ ["name"] = "Cheat Type", ["value"] = reason, ["inline"] = true },
+			{ ["name"] = "Detail", ["value"] = value, ["inline"] = true },
+			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true },
+			{ ["name"] = "Detection", ["value"] = "**" .. data.Violations .. "**", ["inline"] = true }
+		}
+	})
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(2)
