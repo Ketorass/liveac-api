@@ -1,4 +1,4 @@
--- =====================================================================
+﻿-- =====================================================================
 -- LIVE ANTI-CHEAT (English)
 -- =====================================================================
 
@@ -19,7 +19,7 @@ if not success then
 	return
 end
 
-local result = tostring(response):gsub("[%s\r\n]", "")
+local result = tostring(response):gsub("[%s\r" .. string.char(10) .. "]", "")
 if result ~= "OK" then
 	for _, p in ipairs(Players:GetPlayers()) do p:Kick("[Live Anti-Cheat] Invalid license") end
 	return
@@ -102,8 +102,8 @@ Players.PlayerRemoving:Connect(function(player)
 		["description"] = emoji.leave .. " **" .. player.Name .. "** has left the server.",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: \`" .. player.Name .. "\`" .. string.char(10) .. "ID: \`" .. player.UserId .. "\`", ["inline"] = false },
+			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Leave System" }
 	}
@@ -151,7 +151,7 @@ local function HandleViolation(player, reason, value)
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(2)
-		player:Kick("\n[Live Anti-Cheat]\nSuspicious activity detected repeatedly.\nStatus: Kicked from game. (3/3)")
+		player:Kick("" .. string.char(10) .. "[Live Anti-Cheat]" .. string.char(10) .. "Suspicious activity detected repeatedly." .. string.char(10) .. "Status: Kicked from game. (3/3)")
 	end
 end
 
@@ -187,17 +187,16 @@ local function setupPlayer(player)
 	if player.AccountAge < MIN_ACCOUNT_AGE then
 		local embed = {
 			["title"] = emoji.dikkat .. " Live Anti-Cheat - Suspicious New Account!",
-			["description"] = emoji.dikkat .. " **" .. player.Name .. "** tried to join with a new account and was banned!\n\n" ..
-				emoji.pause .. " **Account Age:** `" .. player.AccountAge .. " Days` (Limit: " .. MIN_ACCOUNT_AGE .. " Days)",
 			["color"] = 16711680,
 			["fields"] = {
-				{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+				{ ["name"] = "Account Age", ["value"] = "`" .. player.AccountAge .. " Days` (Limit: " .. MIN_ACCOUNT_AGE .. " Days)", ["inline"] = false },
+				{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 			},
 			["footer"] = { ["text"] = "Live Anti-Cheat • New Account Protection" }
 		}
 		sendLog(wb("joinleave"), embed)
-		player:Kick("\n\n[Live Anti-Cheat]\nYour account is too new! You need at least " .. MIN_ACCOUNT_AGE .. " days to join this server.")
+		player:Kick("" .. string.char(10,10) .. "[Live Anti-Cheat]" .. string.char(10) .. "Your account is too new! You need at least " .. MIN_ACCOUNT_AGE .. " days to join this server.")
 		return
 	end
 
@@ -207,8 +206,8 @@ local function setupPlayer(player)
 		["description"] = emoji.join .. " **" .. player.Name .. "** successfully connected to the server.",
 		["color"] = 65280,
 		["fields"] = {
-			{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: \`" .. player.Name .. "\`" .. string.char(10) .. "ID: \`" .. player.UserId .. "\`", ["inline"] = false },
+			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Join System" }
 	}
@@ -223,13 +222,12 @@ local function setupPlayer(player)
 				if string.find(name, b) then
 					local embed = {
 						["title"] = emoji.dikkat .. " Live Anti-Cheat - Banned Tool Detected!",
-						["description"] = emoji.dikkat .. " **" .. player.Name .. "** opened a banned tool or started copying!\n\n" ..
-							emoji.pause .. " **Detected:** `" .. obj.Name .. "`\n" ..
-							emoji.event .. " **Location:** `" .. tostring(container) .. "`",
 						["color"] = 16711680,
 						["fields"] = {
-							{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-							{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+							{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+							{ ["name"] = "Detected", ["value"] = "`" .. obj.Name .. "`", ["inline"] = false },
+							{ ["name"] = "Location", ["value"] = "`" .. tostring(container) .. "`", ["inline"] = false },
+							{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 						},
 						["footer"] = { ["text"] = "Live Anti-Cheat • Anti-Exploit" }
 					}
@@ -255,13 +253,12 @@ local function setupPlayer(player)
 			if string.find(name, b) then
 				local embed = {
 					["title"] = emoji.dikkat .. " Live Anti-Cheat - Banned Tool Detected!",
-					["description"] = emoji.dikkat .. " **" .. player.Name .. "** opened a banned tool or started copying!\n\n" ..
-						emoji.pause .. " **Detected:** `" .. obj.Name .. "`\n" ..
-						emoji.event .. " **Location:** `" .. tostring(obj.Parent) .. "`",
 					["color"] = 16711680,
 					["fields"] = {
-						{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+						{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+						{ ["name"] = "Detected", ["value"] = "`" .. obj.Name .. "`", ["inline"] = false },
+						{ ["name"] = "Location", ["value"] = "`" .. tostring(obj.Parent) .. "`", ["inline"] = false },
+						{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 					},
 					["footer"] = { ["text"] = "Live Anti-Cheat • Anti-Exploit" }
 				}
@@ -278,11 +275,11 @@ local function setupPlayer(player)
 		-- Chat log
 		local embed = {
 			["title"] = emoji.bell .. " New Message",
-			["description"] = emoji.mesaj .. " **" .. player.Name .. ":** " .. message,
 			["color"] = 16711680,
 			["fields"] = {
-				{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				{ ["name"] = "Sender", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+				{ ["name"] = "Message", ["value"] = "```" .. message .. "```", ["inline"] = false },
+				{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 			},
 			["footer"] = { ["text"] = "Live Anti-Cheat • Log System" }
 		}
@@ -294,12 +291,11 @@ local function setupPlayer(player)
 			if string.find(cleaned, word) then
 				local embed = {
 					["title"] = emoji.dikkat .. " Live Anti-Cheat - Smart Filter Alert!",
-					["description"] = emoji.dikkat .. " **" .. player.Name .. "** attempted to bypass the smart filter!\n\n" ..
-						emoji.pause .. " **Message:** `" .. message .. "`",
 					["color"] = 16711680,
 					["fields"] = {
-						{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+						{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+						{ ["name"] = "Message", ["value"] = "```" .. message .. "```", ["inline"] = false },
+						{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 					},
 					["footer"] = { ["text"] = "Live Anti-Cheat • Smart Filter" }
 				}
@@ -312,12 +308,11 @@ local function setupPlayer(player)
 		if string.sub(message, 1, 1) == ":" and #message > 2 then
 			local embed = {
 				["title"] = emoji.dikkat .. " Adonis Admin Command Log!",
-				["description"] = emoji.dikkat .. " **" .. player.Name .. "** executed an admin command!\n\n" ..
-					emoji.event .. " **Command:** `" .. message .. "`",
 				["color"] = 3447003,
 				["fields"] = {
-					{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-					{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+					{ ["name"] = "Command", ["value"] = "```" .. message .. "```", ["inline"] = false },
+					{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 				},
 				["footer"] = { ["text"] = "Live Anti-Cheat • Adonis Protection" }
 			}
@@ -363,12 +358,13 @@ local function setupPlayer(player)
 				if dmg > 2 then
 					local embed = {
 						["title"] = emoji.kan .. " Live System - Damage Tracking",
-						["description"] = emoji.bell .. " **Damage Log**\n\n" ..
-							emoji.uye .. " **Player:** " .. player.Name .. "\n" ..
-							emoji.oldu .. " **Damage:** " .. math.floor(dmg) .. "\n" ..
-							emoji.web .. " **Health:** " .. math.floor(newHealth) .. "\n" ..
-							emoji.saat .. " **Time:** " .. os.date("%H:%M:%S"),
-						["color"] = 10038562
+						["color"] = 10038562,
+						["fields"] = {
+							{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+							{ ["name"] = "Damage", ["value"] = "`" .. math.floor(dmg) .. "`", ["inline"] = false },
+							{ ["name"] = "Health Left", ["value"] = "`" .. math.floor(newHealth) .. "`", ["inline"] = false },
+							{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
+						}
 					}
 	sendLog(config.main, embed)
 				end
@@ -408,14 +404,13 @@ local function attachRemote(remote)
 				local finalArgs = #strs > 0 and table.concat(strs, ", ") or "No Data"
 				local embed = {
 					["title"] = emoji.dikkat .. " Live Anti-Cheat - Remote Event Spam!",
-					["description"] = emoji.dikkat .. " **" .. player.Name .. "** triggered suspicious Remote activity!\n\n" ..
-						emoji.event .. " **Remote Name:** `" .. remote.Name .. "`\n" ..
-						emoji.rules .. " **Requests/sec:** `" .. s.count .. "/" .. REMOTE_LIMIT .. "`\n" ..
-						emoji.pause .. " **Sent Data:** `" .. finalArgs .. "`",
 					["color"] = 16711680,
 					["fields"] = {
-						{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+						{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+						{ ["name"] = "Remote Name", ["value"] = "`" .. remote.Name .. "`", ["inline"] = false },
+						{ ["name"] = "Requests/sec", ["value"] = "`" .. s.count .. "/" .. REMOTE_LIMIT .. "`", ["inline"] = false },
+						{ ["name"] = "Sent Data", ["value"] = "```" .. finalArgs .. "```", ["inline"] = false },
+						{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 					},
 					["footer"] = { ["text"] = "Live Anti-Cheat • Remote Protection" }
 				}
@@ -439,13 +434,12 @@ game:BindToClose(function()
 	task.wait(2.5)
 	local embed = {
 		["title"] = emoji.dikkat .. " Live Anti-Cheat - Server Shutdown Summary!",
-		["description"] = emoji.dikkat .. " **Server is shutting down or updating!**\n\n" ..
-			emoji.pause .. " **Status:** Disconnecting, data being secured.\n" ..
-			emoji.uye .. " **Players Disconnected:** `" .. count .. "`",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "💾 Database (DataStore)", ["value"] = "All player data successfully synced and saved.", ["inline"] = true },
-			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = "Status", ["value"] = "Server is shutting down or updating.", ["inline"] = false },
+			{ ["name"] = "Players Disconnected", ["value"] = "`" .. count .. "`", ["inline"] = false },
+			{ ["name"] = "Database", ["value"] = "All player data successfully saved.", ["inline"] = false },
+			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Server Security & Data System" }
 	}
@@ -469,13 +463,12 @@ RunService.Heartbeat:Connect(function()
 			lastTPSLog = now
 			local embed = {
 				["title"] = emoji.dikkat .. " Live Anti-Cheat - Server Under Heavy Load!",
-				["description"] = emoji.dikkat .. " **Server Experiencing Severe Lag!**\n\n" ..
-					emoji.pause .. " **Current TPS:** `" .. math.floor(tps) .. "/60` (Limit: " .. TPS_LIMIT .. " TPS)\n" ..
-					emoji.event .. " **Possible Cause:** Extreme Lag",
 				["color"] = 16711680,
 				["fields"] = {
-					{ ["name"] = emoji.uye .. " Status", ["value"] = "Server is at risk of crashing!", ["inline"] = true },
-					{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					{ ["name"] = "Current TPS", ["value"] = "`" .. math.floor(tps) .. "/60` (Limit: " .. TPS_LIMIT .. ")", ["inline"] = false },
+					{ ["name"] = "Players Online", ["value"] = "`" .. #Players:GetPlayers() .. "`", ["inline"] = false },
+					{ ["name"] = "Status", ["value"] = "Server is at risk of crashing!", ["inline"] = false },
+					{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 				},
 				["footer"] = { ["text"] = "Live Anti-Cheat • Server Performance Monitor" }
 			}
@@ -498,11 +491,11 @@ TextChatService.MessageReceived:Connect(function(msg)
 	-- Chat log
 	local embed = {
 		["title"] = emoji.bell .. " New Message",
-		["description"] = emoji.mesaj .. " **" .. player.Name .. ":** " .. msg.Text,
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = "Sender", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+			{ ["name"] = "Message", ["value"] = "```" .. msg.Text .. "```", ["inline"] = false },
+			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Log System" }
 	}
@@ -514,12 +507,11 @@ TextChatService.MessageReceived:Connect(function(msg)
 		if string.find(cleaned, word) then
 			local embed = {
 				["title"] = emoji.dikkat .. " Live Anti-Cheat - Smart Filter Alert!",
-				["description"] = emoji.dikkat .. " **" .. player.Name .. "** attempted to bypass the smart filter!\n\n" ..
-					emoji.pause .. " **Message:** `" .. msg.Text .. "`",
 				["color"] = 16711680,
 				["fields"] = {
-					{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-					{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+					{ ["name"] = "Message", ["value"] = "```" .. msg.Text .. "```", ["inline"] = false },
+					{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 				},
 				["footer"] = { ["text"] = "Live Anti-Cheat • Smart Filter" }
 			}
@@ -532,12 +524,11 @@ TextChatService.MessageReceived:Connect(function(msg)
 	if string.sub(msg.Text, 1, 1) == ":" and #msg.Text > 2 then
 		local embed = {
 			["title"] = emoji.dikkat .. " Adonis Admin Command Log!",
-			["description"] = emoji.dikkat .. " **" .. player.Name .. "** executed an admin command!\n\n" ..
-				emoji.event .. " **Command:** `" .. msg.Text .. "`",
 			["color"] = 3447003,
 			["fields"] = {
-				{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+				{ ["name"] = "Command", ["value"] = "```" .. msg.Text .. "```", ["inline"] = false },
+				{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 			},
 			["footer"] = { ["text"] = "Live Anti-Cheat • Adonis Protection" }
 		}
