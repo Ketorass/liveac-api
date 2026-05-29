@@ -142,11 +142,10 @@ local function HandleViolation(player, reason, value)
 		["title"] = "Anti-Cheat Alert",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = true },
-			{ ["name"] = "Cheat Type", ["value"] = reason, ["inline"] = true },
-			{ ["name"] = "Detail", ["value"] = value, ["inline"] = true },
-			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true },
-			{ ["name"] = "Detection", ["value"] = "**" .. data.Violations .. "**", ["inline"] = true }
+			{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = false },
+			{ ["name"] = "Cheat Type", ["value"] = reason, ["inline"] = false },
+			{ ["name"] = "Detail", ["value"] = value, ["inline"] = false },
+			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = false }
 		}
 	})
 	AlertEvent:FireClient(player)
