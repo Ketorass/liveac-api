@@ -286,7 +286,7 @@ local function setupPlayer(player)
 		local function fireKill()
 			if killFired then return end
 			killFired = true
-			task.wait(0.1)
+			warn("[Live-AC] Kill detected:", player.Name)
 			local tag = humanoid:FindFirstChild("creator")
 			local killer = tag and tag.Value or nil
 			local desc = killer and (emoji.bicak .. " **" .. killer.Name .. "** killed **" .. player.Name .. "**!") or (emoji.oldu .. " **" .. player.Name .. "** died or committed suicide.")
@@ -323,6 +323,11 @@ local function setupPlayer(player)
 				end
 			end
 			if newHealth > 0 then lastHealth = newHealth end
+		end)
+		character.AncestryChanged:Connect(function()
+			if not character:IsDescendantOf(game) then
+				fireKill()
+			end
 		end)
 	end
 
