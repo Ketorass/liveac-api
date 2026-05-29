@@ -218,19 +218,20 @@ local SETTINGS = {
 local SESSION_DATA = {}
 
 local function HandleViolation(player, reason, value)
-	print("[LiveAC] HandleViolation cagrildi: " .. player.Name .. " reason=" .. reason .. " value=" .. value)
 	local data = SESSION_DATA[player]
-	if not data or os.clock() < data.NextAlert then
-		print("[LiveAC] HandleViolation engellendi: data=" .. tostring(data) .. " nextAlert=" .. (data and os.clock() - data.NextAlert or "?"))
-		return
-	end
+	if not data or os.clock() < data.NextAlert then return end
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	local embed = {
-		["title"] = "🚨 Live Anti-Cheat: Cheat Detected",
+		["title"] = "🚨 Anti-Cheat Tespiti",
 		["color"] = 16711680,
-		["description"] = "**Oyuncu:** " .. player.Name .. "\n**Sebep:** " .. reason .. "\n**Detay:** " .. value .. "\n**Ihlal Sayisi:** " .. data.Violations .. "/3",
-		["footer"] = { ["text"] = "Live Anti-Cheat - " .. os.date("%H:%M") }
+		["fields"] = {
+			{ ["name"] = "👤 Oyuncu", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
+			{ ["name"] = "🔍 Sebep", ["value"] = reason, ["inline"] = true },
+			{ ["name"] = "📊 Detay", ["value"] = value, ["inline"] = true },
+			{ ["name"] = "⚠️ İhlal", ["value"] = data.Violations .. "/3", ["inline"] = true },
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat | " .. os.date("%H:%M:%S") }
 	}
 	sendLog(wb("anticheat"), embed)
 	AlertEvent:FireClient(player)
@@ -323,9 +324,7 @@ local function setupPlayer(player)
 
 		-- Speed/Fly (TrackPlayer loop)
 		SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }
-		print("[LiveAC] Speed loop kuruluyor: " .. player.Name .. " / character=" .. tostring(character))
 		task.spawn(function()
-			print("[LiveAC] Speed loop BASLADI: " .. player.Name)
 			while character.Parent and player.Parent do
 				task.wait(SETTINGS.TICK_RATE)
 				local cp = root.Position
@@ -334,10 +333,7 @@ local function setupPlayer(player)
 					local dist = (Vector3.new(cp.X, 0, cp.Z) - Vector3.new(SESSION_DATA[player].LastPos.X, 0, SESSION_DATA[player].LastPos.Z)).Magnitude
 					local speed = dist / SETTINGS.TICK_RATE
 					local limit = iv and SETTINGS.MAX_VEHICLE_SPEED or SETTINGS.MAX_WALK_SPEED
-					if speed > limit then
-						print("[LiveAC] HIZ TESPIT: " .. player.Name .. " speed=" .. math.floor(speed) .. " limit=" .. limit)
-						HandleViolation(player, "Hiz/Isinlanma", math.floor(speed) .. " studs/s")
-					end
+					if speed > limit then HandleViolation(player, "Hiz/Isinlanma", math.floor(speed) .. " studs/s") end
 					local ray = workspace:Raycast(root.Position, Vector3.new(0, -30, 0))
 					if not ray and not iv and humanoid.FloorMaterial == Enum.Material.Air then
 						SESSION_DATA[player].VerticalTick += SETTINGS.TICK_RATE
@@ -352,28 +348,42 @@ local function setupPlayer(player)
 		end)
 
 		-- Invisibility
-		print("[LiveAC] Invis loop kuruluyor: " .. player.Name)
-		task.spawn(function()
-			print("[LiveAC] Invis loop BASLADI: " .. player.Name)
-			while character.Parent do
-				task.wait(10)
-				if not loggedPlayers[player.UserId] then
-					for _, part in pairs(character:GetChildren()) do
-						if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Transparency >= 0.98 then
-							loggedPlayers[player.UserId] = true
-							local embed = {
-								["title"] = "🔍 Live System - Invisiblity Cheat Detect",
-								["description"] = "🚨 **Invisibility Check**\n\n👤 **Oyuncu:** " .. player.Name .. "\n🆔 **ID:** " .. player.UserId .. "\n📋 **Detay:** Gizli Parca (" .. part.Name .. ")\n🕒 **Zaman:** " .. os.date("%H:%M:%S"),
-								["color"] = 16711680
-							}
-							sendLog(wb("invis"), embed)
-							task.delay(30, function() loggedPlayers[player.UserId] = nil end)
-							break
-						end
-					end
+		local function checkInvis()
+			if loggedPlayers[player.UserId] then return end
+			for _, part in pairs(character:GetDescendants()) do
+				if part:IsA("BasePart") and part.Transparency >= 0.98 then
+					loggedPlayers[player.UserId] = true
+					local embed = {
+						["title"] = "👁️ Anti-Cheat: Görünmezlik Tespiti",
+						["color"] = 16711680,
+						["fields"] = {
+							{ ["name"] = "👤 Oyuncu", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
+							{ ["name"] = "📋 Parça", ["value"] = part.Name, ["inline"] = true },
+							{ ["name"] = "🔍 Şeffaflık", ["value"] = math.floor(part.Transparency * 100) .. "%", ["inline"] = true },
+						},
+						["footer"] = { ["text"] = "Live Anti-Cheat | " .. os.date("%H:%M:%S") }
+					}
+					sendLog(wb("invis"), embed)
+					task.delay(30, function() loggedPlayers[player.UserId] = nil end)
+					break
 				end
 			end
+		end
+		checkInvis()
+		character.DescendantAdded:Connect(function(desc)
+			if desc:IsA("BasePart") then
+				desc:GetPropertyChangedSignal("Transparency"):Connect(function()
+					if desc.Transparency >= 0.98 then checkInvis() end
+				end)
+			end
 		end)
+		for _, part in pairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part:GetPropertyChangedSignal("Transparency"):Connect(function()
+					if part.Transparency >= 0.98 then checkInvis() end
+				end)
+			end
+		end
 
 		-- Damage
 		local lastHealth = humanoid.Health

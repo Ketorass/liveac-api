@@ -227,10 +227,15 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	local embed = {
-		["title"] = "🚨 Live Anti-Cheat: Cheat Detected",
+		["title"] = "🚨 Anti-Cheat Detection",
 		["color"] = 16711680,
-		["description"] = "**Player:** " .. player.Name .. "\n**Reason:** " .. reason .. "\n**Detail:** " .. value .. "\n**Violation Count:** " .. data.Violations .. "/3",
-		["footer"] = { ["text"] = "Live Anti-Cheat - " .. os.date("%H:%M") }
+		["fields"] = {
+			{ ["name"] = "👤 Player", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
+			{ ["name"] = "🔍 Reason", ["value"] = reason, ["inline"] = true },
+			{ ["name"] = "📊 Detail", ["value"] = value, ["inline"] = true },
+			{ ["name"] = "⚠️ Violation", ["value"] = data.Violations .. "/3", ["inline"] = true },
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat | " .. os.date("%H:%M:%S") }
 	}
 	sendLog(wb("anticheat"), embed)
 	AlertEvent:FireClient(player)
@@ -341,26 +346,42 @@ local function setupPlayer(player)
 		end)
 
 		-- Invisibility
-		task.spawn(function()
-			while character.Parent do
-				task.wait(10)
-				if not loggedPlayers[player.UserId] then
-					for _, part in pairs(character:GetChildren()) do
-						if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Transparency >= 0.98 then
-							loggedPlayers[player.UserId] = true
-							local embed = {
-								["title"] = "🔍 Live System - Invisibility Cheat Detect",
-								["description"] = "🚨 **Invisibility Check**\n\n👤 **Player:** " .. player.Name .. "\n🆔 **ID:** " .. player.UserId .. "\n📋 **Detail:** Hidden Part (" .. part.Name .. ")\n🕒 **Time:** " .. os.date("%H:%M:%S"),
-								["color"] = 16711680
-							}
-							sendLog(wb("invis"), embed)
-							task.delay(30, function() loggedPlayers[player.UserId] = nil end)
-							break
-						end
-					end
+		local function checkInvis()
+			if loggedPlayers[player.UserId] then return end
+			for _, part in pairs(character:GetDescendants()) do
+				if part:IsA("BasePart") and part.Transparency >= 0.98 then
+					loggedPlayers[player.UserId] = true
+					local embed = {
+						["title"] = "👁️ Anti-Cheat: Invisibility Detected",
+						["color"] = 16711680,
+						["fields"] = {
+							{ ["name"] = "👤 Player", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
+							{ ["name"] = "📋 Part", ["value"] = part.Name, ["inline"] = true },
+							{ ["name"] = "🔍 Transparency", ["value"] = math.floor(part.Transparency * 100) .. "%", ["inline"] = true },
+						},
+						["footer"] = { ["text"] = "Live Anti-Cheat | " .. os.date("%H:%M:%S") }
+					}
+					sendLog(wb("invis"), embed)
+					task.delay(30, function() loggedPlayers[player.UserId] = nil end)
+					break
 				end
 			end
+		end
+		checkInvis()
+		character.DescendantAdded:Connect(function(desc)
+			if desc:IsA("BasePart") then
+				desc:GetPropertyChangedSignal("Transparency"):Connect(function()
+					if desc.Transparency >= 0.98 then checkInvis() end
+				end)
+			end
 		end)
+		for _, part in pairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part:GetPropertyChangedSignal("Transparency"):Connect(function()
+					if part.Transparency >= 0.98 then checkInvis() end
+				end)
+			end
+		end
 
 		-- Damage
 		local lastHealth = humanoid.Health
