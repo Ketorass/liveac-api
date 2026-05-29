@@ -80,14 +80,12 @@ local emoji = {
 -- =====================================================================
 local function sendLog(webhook, embed)
 	if webhook == "" then warn("[Live-AC] Webhook empty, skipping") return end
-	local data = { ["content"] = "Anti-Cheat Log: " .. (embed.description or embed.title or "Log"), ["embeds"] = { embed } }
+	local data = { ["embeds"] = { embed } }
 	local json = HttpService:JSONEncode(data)
-	warn("[Live-AC] JSON:", json)
 	task.spawn(function()
-		local ok, err = pcall(function()
+		pcall(function()
 			HttpService:PostAsync(webhook, json)
 		end)
-		if ok then warn("[Live-AC] POST success") else warn("[Live-AC] POST failed:", err) end
 	end)
 end
 
@@ -126,9 +124,19 @@ local function HandleViolation(player, reason, value)
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
 	local wh = config.main
-	warn("[Live-AC] Webhook:", wh)
-	local msg = "**" .. emoji.dikkat .. " " .. player.Name .. "** " .. reason .. " - " .. value
-	sendLog(wh, { ["title"] = msg, ["color"] = 16711680, ["description"] = "Oyuncu: " .. player.Name .. " (" .. player.UserId .. ")\nSebep: " .. reason .. "\nDetay: " .. value .. "\nZaman: " .. os.date("%H:%M:%S") })
+	local embed = {
+		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
+		["color"] = 16711680,
+		["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı hile açmış olabilir!",
+		["fields"] = {
+			{ ["name"] = emoji.pause .. " Hile Türü", ["value"] = "`" .. reason .. "`", ["inline"] = true },
+			{ ["name"] = emoji.event .. " Detay", ["value"] = "`" .. value .. "`", ["inline"] = true },
+			{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
+			{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat • Güvenlik Modülü" }
+	}
+	sendLog(wh, embed)
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
