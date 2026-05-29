@@ -348,13 +348,13 @@ local function setupPlayer(player)
 		end)
 
 		-- Invisibility
-		local bodyParts = { "Head", "Torso", "UpperTorso", "LowerTorso", "HumanoidRootPart", "LeftArm", "RightArm", "LeftLeg", "RightLeg" }
+		local visibleParts = { "Head", "Torso", "UpperTorso", "LowerTorso", "LeftArm", "RightArm", "LeftLeg", "RightLeg" }
 		local function checkInvis()
 			if loggedPlayers[player.UserId] then return end
 			local found = false
 			for _, part in pairs(character:GetChildren()) do
 				if part:IsA("BasePart") and part.Transparency >= 0.98 then
-					for _, bp in ipairs(bodyParts) do
+					for _, bp in ipairs(visibleParts) do
 						if part.Name == bp then found = true; break end
 					end
 				end
@@ -426,6 +426,7 @@ local function setupPlayer(player)
 
 		-- Kill
 		humanoid.Died:Connect(function()
+			print("[LiveAC] Kill event fired for " .. player.Name)
 			local tag = humanoid:FindFirstChild("creator")
 			local killer = tag and tag.Value or nil
 			local fields = {

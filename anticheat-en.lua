@@ -424,6 +424,7 @@ local function setupPlayer(player)
 
 		-- Kill
 		humanoid.Died:Connect(function()
+			print("[LiveAC] Kill event fired for " .. player.Name)
 			local tag = humanoid:FindFirstChild("creator")
 			local killer = tag and tag.Value or nil
 			local fields = {
