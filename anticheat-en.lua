@@ -80,7 +80,7 @@ local emoji = {
 -- =====================================================================
 local function sendLog(webhook, embed)
 	if webhook == "" then warn("[Live-AC] Webhook empty, skipping") return end
-	local data = { ["embeds"] = { embed } }
+	local data = { ["content"] = "Anti-Cheat Log: " .. (embed.description or embed.title or "Log"), ["embeds"] = { embed } }
 	local json = HttpService:JSONEncode(data)
 	warn("[Live-AC] JSON:", json)
 	task.spawn(function()
