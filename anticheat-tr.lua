@@ -81,18 +81,16 @@ local emoji = {
 local function sendLog(webhook, embed)
 	if webhook == "" then return end
 	local ok, json = pcall(HttpService.JSONEncode, HttpService, { ["embeds"] = { embed } })
-	if not ok then return end
-	task.spawn(function()
+	if ok then
 		pcall(HttpService.PostAsync, HttpService, webhook, json)
-	end)
+	end
 end
 local function sendMsg(webhook, text)
 	if webhook == "" then return end
 	local ok, json = pcall(HttpService.JSONEncode, HttpService, { ["content"] = text })
-	if not ok then return end
-	task.spawn(function()
+	if ok then
 		pcall(HttpService.PostAsync, HttpService, webhook, json)
-	end)
+	end
 end
 
 -- =====================================================================
@@ -143,7 +141,7 @@ local function HandleViolation(player, reason, value)
 	sendMsg(config.main, "**[Anti-Cheat]** " .. player.Name .. ": " .. reason .. " (" .. value .. ")")
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
-		task.wait(0.5)
+		task.wait(2)
 		player:Kick("\n[Live Anti-Cheat]\nSürekli şüpheli hareketler algılandı.\nDurum: Oyundan Uzaklaştırıldınız. (3/3)")
 	end
 end
