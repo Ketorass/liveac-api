@@ -218,8 +218,12 @@ local SETTINGS = {
 local SESSION_DATA = {}
 
 local function HandleViolation(player, reason, value)
+	print("[LiveAC] HandleViolation cagrildi: " .. player.Name .. " reason=" .. reason .. " value=" .. value)
 	local data = SESSION_DATA[player]
-	if not data or os.clock() < data.NextAlert then return end
+	if not data or os.clock() < data.NextAlert then
+		print("[LiveAC] HandleViolation engellendi: data=" .. tostring(data) .. " nextAlert=" .. (data and os.clock() - data.NextAlert or "?"))
+		return
+	end
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	local embed = {
@@ -319,7 +323,9 @@ local function setupPlayer(player)
 
 		-- Speed/Fly (TrackPlayer loop)
 		SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }
+		print("[LiveAC] Speed loop kuruluyor: " .. player.Name .. " / character=" .. tostring(character))
 		task.spawn(function()
+			print("[LiveAC] Speed loop BASLADI: " .. player.Name)
 			while character.Parent and player.Parent do
 				task.wait(SETTINGS.TICK_RATE)
 				local cp = root.Position
@@ -328,7 +334,10 @@ local function setupPlayer(player)
 					local dist = (Vector3.new(cp.X, 0, cp.Z) - Vector3.new(SESSION_DATA[player].LastPos.X, 0, SESSION_DATA[player].LastPos.Z)).Magnitude
 					local speed = dist / SETTINGS.TICK_RATE
 					local limit = iv and SETTINGS.MAX_VEHICLE_SPEED or SETTINGS.MAX_WALK_SPEED
-					if speed > limit then HandleViolation(player, "Hiz/Isinlanma", math.floor(speed) .. " studs/s") end
+					if speed > limit then
+						print("[LiveAC] HIZ TESPIT: " .. player.Name .. " speed=" .. math.floor(speed) .. " limit=" .. limit)
+						HandleViolation(player, "Hiz/Isinlanma", math.floor(speed) .. " studs/s")
+					end
 					local ray = workspace:Raycast(root.Position, Vector3.new(0, -30, 0))
 					if not ray and not iv and humanoid.FloorMaterial == Enum.Material.Air then
 						SESSION_DATA[player].VerticalTick += SETTINGS.TICK_RATE
@@ -343,7 +352,9 @@ local function setupPlayer(player)
 		end)
 
 		-- Invisibility
+		print("[LiveAC] Invis loop kuruluyor: " .. player.Name)
 		task.spawn(function()
+			print("[LiveAC] Invis loop BASLADI: " .. player.Name)
 			while character.Parent do
 				task.wait(10)
 				if not loggedPlayers[player.UserId] then
