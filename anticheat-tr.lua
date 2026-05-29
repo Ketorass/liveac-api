@@ -61,7 +61,7 @@ local emoji = {
 	saat = "<:saat:1508253712685072514>",
 	event = "<:event:1508253201223258152>",
 	bell = "<a:RingingBell:1509931849730887750>",
-	join = "<:join:1509938049004605480>",
+	join = "<a:join:1486684147970871472>",
 	leave = "<:leave:1509928987780972685>",
 	vehicle_in = "<a:bye_car_blank_bearish:1509937025917391049>",
 	vehicle_out = "<a:q_peperun:1486689348203319457>",
@@ -259,9 +259,9 @@ local function setupPlayer(player)
 		local humanoid = character:WaitForChild("Humanoid")
 		local root = character:WaitForChild("HumanoidRootPart")
 
-		-- Vehicle
+		-- Vehicle (sadece VehicleSeat ve Seat için)
 		humanoid.Seated:Connect(function(active, seat)
-			if active and seat then
+			if active and seat and (seat:IsA("VehicleSeat") or seat:IsA("Seat")) then
 				local vehicle = seat.Parent
 				local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Araç"
 				local koltukTuru = seat:IsA("VehicleSeat") and "Şoför Koltuğu" or "Yolcu Koltuğu"
