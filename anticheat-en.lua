@@ -55,14 +55,14 @@ end
 -- ========== DISCORD EMOJIS ==========
 -- These emojis must be defined in your server
 local emoji = {
-	uye = "<:uye:1508252675655995494>",
-	dikkat = "<a:dikkat:1508252116072796180>",
-	pause = "<:pause:1508253755315851385>",
-	saat = "<a:saat:1508253737431601243>",
-	event = "<:event:1508253224031748237>",
-	bell = "<a:RingingBell:1483429950190260305>",
+	uye = "<:uye:1508252634019135498>",
+	dikkat = "<a:dikkat:1508250614075752629>",
+	pause = "<:pause:1508253678295843008>",
+	saat = "<:saat:1508253712685072514>",
+	event = "<:event:1508253201223258152>",
+	bell = "<a:RingingBell:1509931849730887750>",
 	join = "<a:join:1486684147970871472>",
-	leave = "<:parsher_a_leave:1486684695797170277>",
+	leave = "<:leave:1509928987780972685>",
 	vehicle_in = "<a:bye_car_blank_bearish:1486689158947803267>",
 	vehicle_out = "<a:q_peperun:1486689348203319457>",
 	alarm = "<a:alarm:1465818655697932330>",
@@ -72,7 +72,7 @@ local emoji = {
 	oldu = "<a:eddead:1486686805439811594>",
 	web = "<:web:1486640325681348699>",
 	bicak = "<:pepeKnife:1486686549767753738>",
-	mesaj = "<a:mesaj2:1486681118303457421>",
+	mesaj = "<:chat:1509931912188264542>",
 	loading = "<a:LiveLoading:1483077755032834249>",
 }
 
