@@ -129,14 +129,15 @@ local function HandleViolation(player, reason, value)
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
 	local embed = {
-		["title"] = "Live Anti-Cheat: Cheat Detected",
+		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
+		["description"] = "**" .. player.Name .. "** detected with suspicious movements!",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "Player", ["value"] = player.Name .. " (" .. player.UserId .. ")", ["inline"] = true },
-			{ ["name"] = "Cheat Type", ["value"] = reason, ["inline"] = true },
-			{ ["name"] = "Detail", ["value"] = value, ["inline"] = false },
-			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true },
-			{ ["name"] = "Detection Count", ["value"] = tostring(data.Violations), ["inline"] = true }
+			{ ["name"] = emoji.pause .. " Cheat Type", ["value"] = "`" .. reason .. "`", ["inline"] = true },
+			{ ["name"] = emoji.event .. " Detail", ["value"] = "`" .. value .. "`", ["inline"] = true },
+			{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
+			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true },
+			{ ["name"] = emoji.uye .. " Detection", ["value"] = "`" .. data.Violations .. "`", ["inline"] = true }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat" }
 	}
