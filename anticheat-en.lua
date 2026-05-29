@@ -130,24 +130,16 @@ local function HandleViolation(player, reason, value)
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
 	local embed = {
-		["title"] = "Live Anti-Cheat: Cheat Detected",
-		["description"] = "**" .. player.Name .. "** detected with suspicious movements!",
+		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
+		["description"] = emoji.bell .. " **" .. player.Name .. "** detected with suspicious movements!\n\n" ..
+			emoji.uye .. " **Player:** " .. player.Name .. "\n" ..
+			emoji.pause .. " **Cheat Type:** " .. reason .. "\n" ..
+			emoji.event .. " **Detail:** " .. value .. "\n" ..
+			emoji.saat .. " **Time:** " .. os.date("%H:%M:%S"),
 		["color"] = 16711680,
-		["fields"] = {
-			{ ["name"] = "Cheat Type", ["value"] = "`" .. reason .. "`", ["inline"] = true },
-			{ ["name"] = "Detail", ["value"] = "`" .. value .. "`", ["inline"] = true },
-			{ ["name"] = "Player", ["value"] = "`" .. player.Name .. "` (`" .. player.UserId .. "`)", ["inline"] = true },
-			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-		},
-		["footer"] = { ["text"] = "Live Anti-Cheat" }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Security Module" }
 	}
-	local payload = { ["content"] = "**Anti-Cheat Alert:** " .. player.Name .. " [" .. reason .. "]", ["embeds"] = { embed } }
-	local ok, json = pcall(HttpService.JSONEncode, HttpService, payload)
-	if ok then
-		task.spawn(function()
-			pcall(HttpService.PostAsync, HttpService, config.main, json)
-		end)
-	end
+	sendLog(wb("damage"), embed)
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
