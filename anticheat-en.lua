@@ -129,16 +129,16 @@ local function HandleViolation(player, reason, value)
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
 	local dmgEmbed = {
 		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
-		["description"] = emoji.bell .. " **" .. player.Name .. "** detected with suspicious movements!\n\n" ..
-			emoji.uye .. " **Player:** " .. player.Name .. " (" .. player.UserId .. ")\n" ..
-			emoji.pause .. " **Cheat Type:** " .. reason .. "\n" ..
-			emoji.event .. " **Detail:** " .. value .. "\n" ..
+		["description"] = emoji.bell .. " **" .. player.Name .. "** detected with suspicious movements!" .. string.char(10,10) ..
+			emoji.uye .. " **Player:** " .. player.Name .. " (" .. player.UserId .. ")" .. string.char(10) ..
+			emoji.pause .. " **Cheat Type:** " .. reason .. string.char(10) ..
+			emoji.event .. " **Detail:** " .. value .. string.char(10) ..
 			emoji.saat .. " **Time:** " .. os.date("%H:%M:%S"),
 		["color"] = 16711680,
 		["footer"] = { ["text"] = "Live Anti-Cheat • Security Module" }
 	}
 	sendLog(wb("damage"), dmgEmbed)
-	sendMsg(config.main, "**[Anti-Cheat]** " .. player.Name .. ": " .. reason .. " (" .. value .. ")")
+	sendLog(config.main, { ["title"] = "Anti-Cheat Alert", ["description"] = "**" .. player.Name .. "** " .. reason .. " (" .. value .. ")", ["color"] = 16711680 })
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(2)
