@@ -79,12 +79,18 @@ local emoji = {
 -- DISCORD LOG SENDER
 -- =====================================================================
 local function sendLog(webhook, embed)
-	if webhook == "" then warn("[Live-AC] Webhook empty") return end
-	local data = { ["content"] = "Live Anti-Cheat Alert", ["embeds"] = { embed } }
-	local ok, json = pcall(HttpService.JSONEncode, HttpService, data)
-	if not ok then warn("[Live-AC] JSON error") return end
+	if webhook == "" then return end
+	local ok, json = pcall(HttpService.JSONEncode, HttpService, { ["embeds"] = { embed } })
+	if not ok then return end
 	task.spawn(function()
-		pcall(HttpService.PostAsync, HttpService, webhook, json, "application/json")
+		pcall(HttpService.PostAsync, HttpService, webhook, json)
+	end)
+end
+local function sendSimple(webhook, text)
+	if webhook == "" then return end
+	local json = HttpService:JSONEncode({ ["content"] = text })
+	task.spawn(function()
+		pcall(HttpService.PostAsync, HttpService, webhook, json)
 	end)
 end
 
@@ -122,20 +128,8 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
-	local wh = config.main
-	local embed = {
-		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
-		["color"] = 16711680,
-		["description"] = emoji.dikkat .. " **" .. player.Name .. "** may be using cheats!",
-		["fields"] = {
-			{ ["name"] = emoji.pause .. " Cheat Type", ["value"] = "`" .. reason .. "`", ["inline"] = true },
-			{ ["name"] = emoji.event .. " Detail", ["value"] = "`" .. value .. "`", ["inline"] = true },
-			{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
-			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-		},
-		["footer"] = { ["text"] = "Live Anti-Cheat • Security Module" }
-	}
-	sendLog(wh, embed)
+	local msg = "**" .. player.Name .. "** " .. reason .. " - " .. value
+	sendSimple(config.main, msg)
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
