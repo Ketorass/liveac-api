@@ -185,8 +185,8 @@ local function handleChatMessage(player, message)
 			["title"] = "⚡ Yetkili Komut",
 			["color"] = 3447003,
 			["fields"] = {
-				{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-				{ ["name"] = "⏸️ Komut", ["value"] = message, ["inline"] = false },
+				{ ["name"] = "👤 Yetkili", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
+				{ ["name"] = "⌨️ Komut", ["value"] = "```" .. message .. "```", ["inline"] = false },
 				{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 			},
 			["footer"] = { ["text"] = "Live Anti-Cheat • Adonis Koruma" }
@@ -292,33 +292,34 @@ local function setupPlayer(player)
 
 		-- Vehicle
 		humanoid.Seated:Connect(function(active, seat)
-		if active and seat then
-			local vehicle = seat.Parent
-			local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Arac"
-			local koltukTuru = seat:IsA("VehicleSeat") and "🚦 Sürücü" or "💺 Yolcu"
-			local embed = {
-				["title"] = "🚗 Araç Girişi",
-				["color"] = 3447003,
-				["fields"] = {
-					{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-					{ ["name"] = "⏸️ Araç", ["value"] = "**" .. aracIsmi .. "**\n" .. koltukTuru, ["inline"] = true },
-					{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-				},
-				["footer"] = { ["text"] = "Live Anti-Cheat • Araç Sistemi" }
-			}
-			sendLog(wb("vehicle"), embed)
-		elseif not active then
-			local embed = {
-				["title"] = "🚶 Araç Çıkışı",
-				["color"] = 3447003,
-				["fields"] = {
-					{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-					{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-				},
-				["footer"] = { ["text"] = "Live Anti-Cheat • Araç Sistemi" }
-			}
-			sendLog(wb("vehicle"), embed)
-		end
+			local vehicle = seat and seat.Parent
+			local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Araç"
+			if active and seat then
+				local embed = {
+					["title"] = "🚗 Araç Girişi",
+					["color"] = 3447003,
+					["fields"] = {
+						{ ["name"] = "👤 Oyuncu", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
+						{ ["name"] = "🚗 Araç", ["value"] = "**" .. aracIsmi .. "**", ["inline"] = true },
+						{ ["name"] = "💺 Koltuk", ["value"] = seat:IsA("VehicleSeat") and "🚦 Sürücü" or "💺 Yolcu", ["inline"] = true },
+						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Araç Sistemi" }
+				}
+				sendLog(wb("vehicle"), embed)
+			elseif not active then
+				local embed = {
+					["title"] = "🚶 Araç Çıkışı",
+					["color"] = 3447003,
+					["fields"] = {
+						{ ["name"] = "👤 Oyuncu", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
+						{ ["name"] = "🚗 Araç", ["value"] = "**" .. aracIsmi .. "**", ["inline"] = true },
+						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Araç Sistemi" }
+				}
+				sendLog(wb("vehicle"), embed)
+			end
 		end)
 
 		-- Speed/Fly (TrackPlayer loop)
@@ -494,8 +495,8 @@ game:BindToClose(function()
 		["title"] = "🔌 Sunucu Kapanıyor",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "👤 Çıkan Oyuncu", ["value"] = "**" .. count .. "** oyuncu", ["inline"] = true },
-			{ ["name"] = "📌 Durum", ["value"] = "Sunucu kapatılıyor / güncelleniyor", ["inline"] = true },
+			{ ["name"] = "👤 Oyuncu Sayısı", ["value"] = "**" .. count .. "** oyuncu çevrimiçiydi", ["inline"] = false },
+			{ ["name"] = "📌 Durum", ["value"] = "Sunucu kapatılıyor veya güncelleniyor", ["inline"] = false },
 			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Kapanış Sistemi" }
@@ -519,15 +520,15 @@ RunService.Heartbeat:Connect(function()
 		if tps < TPS_LIMIT and (now - lastTPSLog) > 30 then
 			lastTPSLog = now
 			local embed = {
-				["title"] = "🚨 Sunucu Lag",
+				["title"] = "🚨 Sunucu Lag Tespit Edildi",
 				["color"] = 16711680,
 				["fields"] = {
-					{ ["name"] = "⚡ TPS", ["value"] = "**" .. math.floor(tps) .. "**/60", ["inline"] = true },
-					{ ["name"] = "📊 Limit", ["value"] = "**" .. TPS_LIMIT .. "** TPS", ["inline"] = true },
-					{ ["name"] = "📌 Durum", ["value"] = "Sunucu aşırı yük altında", ["inline"] = true },
+					{ ["name"] = "⚡ Anlık TPS", ["value"] = "**" .. math.floor(tps) .. "** / 60", ["inline"] = true },
+					{ ["name"] = "📊 Kritik Limit", ["value"] = "**" .. TPS_LIMIT .. "** TPS", ["inline"] = true },
+					{ ["name"] = "📌 Durum", ["value"] = "Sunucu aşırı yük altında, çökme riski var!", ["inline"] = false },
 					{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 				},
-				["footer"] = { ["text"] = "Live Anti-Cheat • Performans" }
+				["footer"] = { ["text"] = "Live Anti-Cheat • Performans Takibi" }
 			}
 			sendLog(wb("tps"), embed)
 		end

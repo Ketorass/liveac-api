@@ -187,8 +187,8 @@ local function handleChatMessage(player, message)
 			["title"] = "⚡ Admin Command",
 			["color"] = 3447003,
 			["fields"] = {
-				{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-				{ ["name"] = "⏸️ Command", ["value"] = message, ["inline"] = false },
+				{ ["name"] = "👤 Admin", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
+				{ ["name"] = "⌨️ Command", ["value"] = "```" .. message .. "```", ["inline"] = false },
 				{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 			},
 			["footer"] = { ["text"] = "Live Anti-Cheat • Adonis Protection" }
@@ -290,16 +290,16 @@ local function setupPlayer(player)
 
 		-- Vehicle
 		humanoid.Seated:Connect(function(active, seat)
+			local vehicle = seat and seat.Parent
+			local vehicleName = vehicle and vehicle.Name or "Unknown Vehicle"
 			if active and seat then
-				local vehicle = seat.Parent
-				local vehicleName = vehicle and vehicle.Name or "Unknown Vehicle"
-				local seatType = seat:IsA("VehicleSeat") and "🚦 Driver" or "💺 Passenger"
 				local embed = {
 					["title"] = "🚗 Vehicle Enter",
 					["color"] = 3447003,
 					["fields"] = {
-						{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-						{ ["name"] = "⏸️ Vehicle", ["value"] = "**" .. vehicleName .. "**\n" .. seatType, ["inline"] = true },
+						{ ["name"] = "👤 Player", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
+						{ ["name"] = "🚗 Vehicle", ["value"] = "**" .. vehicleName .. "**", ["inline"] = true },
+						{ ["name"] = "💺 Seat", ["value"] = seat:IsA("VehicleSeat") and "🚦 Driver" or "💺 Passenger", ["inline"] = true },
 						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 					},
 					["footer"] = { ["text"] = "Live Anti-Cheat • Vehicle System" }
@@ -310,7 +310,8 @@ local function setupPlayer(player)
 					["title"] = "🚶 Vehicle Exit",
 					["color"] = 3447003,
 					["fields"] = {
-						{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+						{ ["name"] = "👤 Player", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
+						{ ["name"] = "🚗 Vehicle", ["value"] = "**" .. vehicleName .. "**", ["inline"] = true },
 						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 					},
 					["footer"] = { ["text"] = "Live Anti-Cheat • Vehicle System" }
@@ -493,8 +494,8 @@ game:BindToClose(function()
 		["title"] = "🔌 Server Shutdown",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "👤 Players Out", ["value"] = "**" .. count .. "** player(s)", ["inline"] = true },
-			{ ["name"] = "📌 Status", ["value"] = "Server shutting down / updating", ["inline"] = true },
+			{ ["name"] = "👤 Players Online", ["value"] = "**" .. count .. "** player(s) were online", ["inline"] = false },
+			{ ["name"] = "📌 Status", ["value"] = "Server shutting down or updating", ["inline"] = false },
 			{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Shutdown System" }
@@ -518,15 +519,15 @@ RunService.Heartbeat:Connect(function()
 		if tps < TPS_LIMIT and (now - lastTPSLog) > 30 then
 			lastTPSLog = now
 			local embed = {
-				["title"] = "🚨 Server Lag",
+				["title"] = "🚨 Server Lag Detected",
 				["color"] = 16711680,
 				["fields"] = {
-					{ ["name"] = "⚡ TPS", ["value"] = "**" .. math.floor(tps) .. "**/60", ["inline"] = true },
-					{ ["name"] = "📊 Limit", ["value"] = "**" .. TPS_LIMIT .. "** TPS", ["inline"] = true },
-					{ ["name"] = "📌 Status", ["value"] = "Server under heavy load", ["inline"] = true },
+					{ ["name"] = "⚡ Current TPS", ["value"] = "**" .. math.floor(tps) .. "** / 60", ["inline"] = true },
+					{ ["name"] = "📊 Critical Limit", ["value"] = "**" .. TPS_LIMIT .. "** TPS", ["inline"] = true },
+					{ ["name"] = "📌 Status", ["value"] = "Server under heavy load, risk of crashing!", ["inline"] = false },
 					{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 				},
-				["footer"] = { ["text"] = "Live Anti-Cheat • Performance" }
+				["footer"] = { ["text"] = "Live Anti-Cheat • Performance Monitor" }
 			}
 			sendLog(wb("tps"), embed)
 		end
