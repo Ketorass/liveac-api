@@ -44,7 +44,7 @@ local config = {
 	tps = "",         -- Sunucu TPS/performans uyarı logları
 	shutdown = "",    -- Sunucu kapanış logları
 	invis = "",       -- Görünmezlik tespit logları (kullanılmıyor)
-	vehicle = "",     -- Araç giriş/çıkış logları
+	vehicle = "",     -- Araç giriş/çıkış logları (kullanılmıyor)
 }
 
 local function wb(n)
@@ -258,40 +258,6 @@ local function setupPlayer(player)
 	local function setupCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
 		local root = character:WaitForChild("HumanoidRootPart")
-
-		-- Vehicle (sadece VehicleSeat ve Seat için)
-		humanoid.Seated:Connect(function(active, seat)
-			if active and seat and (seat:IsA("VehicleSeat") or seat:IsA("Seat")) then
-				local vehicle = seat.Parent
-				local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Araç"
-				local koltukTuru = seat:IsA("VehicleSeat") and "Şoför Koltuğu" or "Yolcu Koltuğu"
-				local embed = {
-					["title"] = emoji.dikkat .. " Live Anti-Cheat - Araç Hareketi!",
-					["description"] = emoji.vehicle_in .. " **" .. player.Name .. "** isimli oyuncu bir araca bindi.\n\n" ..
-						emoji.event .. " **Araç:** `" .. aracIsmi .. "`\n" ..
-						emoji.ids .. " **Koltuk:** `" .. koltukTuru .. "`",
-					["color"] = 3447003,
-					["fields"] = {
-						{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat • Araç Sistemi" }
-				}
-				sendLog(wb("vehicle"), embed)
-			elseif not active then
-				local embed = {
-					["title"] = emoji.dikkat .. " Live Anti-Cheat - Araç Hareketi!",
-					["description"] = emoji.vehicle_out .. " **" .. player.Name .. "** isimli oyuncu araçtan indi.",
-					["color"] = 3447003,
-					["fields"] = {
-						{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat • Araç Sistemi" }
-				}
-				sendLog(wb("vehicle"), embed)
-			end
-		end)
 
 		-- Speed/Fly
 		SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }

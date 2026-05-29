@@ -44,7 +44,7 @@ local config = {
 	tps = "",         -- Server TPS/performance warning logs
 	shutdown = "",    -- Server shutdown logs
 	invis = "",       -- Invisibility detection logs (not in use)
-	vehicle = "",     -- Vehicle enter/exit logs
+	vehicle = "",     -- Vehicle enter/exit logs (not in use)
 }
 
 local function wb(n)
@@ -256,40 +256,6 @@ local function setupPlayer(player)
 	local function setupCharacter(character)
 		local humanoid = character:WaitForChild("Humanoid")
 		local root = character:WaitForChild("HumanoidRootPart")
-
-		-- Vehicle (VehicleSeat and Seat only)
-		humanoid.Seated:Connect(function(active, seat)
-			if active and seat and (seat:IsA("VehicleSeat") or seat:IsA("Seat")) then
-				local vehicle = seat.Parent
-				local vehicleName = vehicle and vehicle.Name or "Unknown Vehicle"
-				local seatType = seat:IsA("VehicleSeat") and "Driver Seat" or "Passenger Seat"
-				local embed = {
-					["title"] = emoji.dikkat .. " Live Anti-Cheat - Vehicle Movement!",
-					["description"] = emoji.vehicle_in .. " **" .. player.Name .. "** got into a vehicle.\n\n" ..
-						emoji.event .. " **Vehicle:** `" .. vehicleName .. "`\n" ..
-						emoji.ids .. " **Seat:** `" .. seatType .. "`",
-					["color"] = 3447003,
-					["fields"] = {
-						{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat • Vehicle System" }
-				}
-				sendLog(wb("vehicle"), embed)
-			elseif not active then
-				local embed = {
-					["title"] = emoji.dikkat .. " Live Anti-Cheat - Vehicle Movement!",
-					["description"] = emoji.vehicle_out .. " **" .. player.Name .. "** got out of a vehicle.",
-					["color"] = 3447003,
-					["fields"] = {
-						{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat • Vehicle System" }
-				}
-				sendLog(wb("vehicle"), embed)
-			end
-		end)
 
 		-- Speed/Fly
 		SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }
