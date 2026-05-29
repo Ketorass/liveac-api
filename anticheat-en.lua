@@ -65,14 +65,13 @@ end
 -- =====================================================================
 Players.PlayerRemoving:Connect(function(player)
 	local embed = {
-		["title"] = "🔔 User Left",
-		["description"] = "🔴 **" .. player.Name .. "** left the server.",
+		["title"] = "🔴 Leave",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
 			{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
-		["footer"] = { ["text"] = "Live Anti-Cheat - Leave System" }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Leave System" }
 	}
 	sendLog(wb("joinleave"), embed)
 end)
@@ -117,14 +116,14 @@ local function handleChatMessage(player, message)
 
 	-- Chat log
 	local embed = {
-		["title"] = "🔔 New Message",
-		["description"] = "💬 **" .. player.Name .. ":** " .. message,
+		["title"] = "💬 New Message",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+			{ ["name"] = "📝 Message", ["value"] = message, ["inline"] = false },
 			{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
-		["footer"] = { ["text"] = "Live Anti-Cheat - Log System" }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Log System" }
 	}
 	sendLog(wb("chat"), embed)
 
@@ -144,14 +143,15 @@ local function handleChatMessage(player, message)
 		if stats.count > SPAM_LIMIT then
 			mutedPlayers[player] = true
 			local embed = {
-				["title"] = "🚨 Live Anti-Cheat - Chat Mute!",
-				["description"] = "🚨 **" .. player.Name .. "** was muted for spamming!\n\n📌 **Messages/Second:** `" .. stats.count .. "/" .. SPAM_LIMIT .. "`\n📌 **Duration:** `" .. MUTE_TIME .. " seconds`",
+				["title"] = "🚨 Spam Detected",
 				["color"] = 16711680,
 				["fields"] = {
-					{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+					{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+					{ ["name"] = "⚡ Speed", ["value"] = "**" .. stats.count .. "** msg/2s (Limit: " .. SPAM_LIMIT .. ")", ["inline"] = true },
+					{ ["name"] = "⏸️ Action", ["value"] = "Muted (**" .. MUTE_TIME .. "**s)", ["inline"] = true },
 					{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 				},
-				["footer"] = { ["text"] = "Live Anti-Cheat - Chat Protection" }
+				["footer"] = { ["text"] = "Live Anti-Cheat • Chat Protection" }
 			}
 			sendLog(wb("spam"), embed)
 			spamNotifyEvent:FireClient(player)
@@ -167,14 +167,14 @@ local function handleChatMessage(player, message)
 	for _, word in ipairs(blockedWords) do
 		if string.find(cleaned, word) then
 			local embed = {
-				["title"] = "🚨 Live Anti-Cheat - Smart Filter Alert!",
-				["description"] = "🚨 **" .. player.Name .. "** tried to bypass the smart filter!\n\n📌 **Message:** `" .. message .. "`",
+				["title"] = "🚨 Filter Alert",
 				["color"] = 16711680,
 				["fields"] = {
-					{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+					{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+					{ ["name"] = "📌 Message", ["value"] = message, ["inline"] = false },
 					{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 				},
-				["footer"] = { ["text"] = "Live Anti-Cheat - Smart Filter" }
+				["footer"] = { ["text"] = "Live Anti-Cheat • Filter System" }
 			}
 			sendLog(wb("filter"), embed)
 			break
@@ -184,14 +184,14 @@ local function handleChatMessage(player, message)
 	-- Adonis command
 	if string.sub(message, 1, 1) == ":" and #message > 2 then
 		local embed = {
-			["title"] = "🚨 Adonis Admin Command Log!",
-			["description"] = "🚨 **" .. player.Name .. "** ran an admin command!\n\n⚡ **Command:** `" .. message .. "`",
+			["title"] = "⚡ Admin Command",
 			["color"] = 3447003,
 			["fields"] = {
-				{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+				{ ["name"] = "⏸️ Command", ["value"] = message, ["inline"] = false },
 				{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 			},
-			["footer"] = { ["text"] = "Live Anti-Cheat - Adonis Protection" }
+			["footer"] = { ["text"] = "Live Anti-Cheat • Adonis Protection" }
 		}
 		sendLog(wb("adonis"), embed)
 	end
@@ -230,12 +230,12 @@ local function HandleViolation(player, reason, value)
 		["title"] = "🚨 Anti-Cheat Detection",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "👤 Player", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
+			{ ["name"] = "👤 Player", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
 			{ ["name"] = "🔍 Reason", ["value"] = reason, ["inline"] = true },
 			{ ["name"] = "📊 Detail", ["value"] = value, ["inline"] = true },
 			{ ["name"] = "⚠️ Violation", ["value"] = data.Violations .. "/3", ["inline"] = true },
 		},
-		["footer"] = { ["text"] = "Live Anti-Cheat | " .. os.date("%H:%M:%S") }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Detection System" }
 	}
 	sendLog(wb("anticheat"), embed)
 	AlertEvent:FireClient(player)
@@ -251,14 +251,15 @@ local function setupPlayer(player)
 	-- New account protection
 	if player.AccountAge < MIN_ACCOUNT_AGE then
 		local embed = {
-			["title"] = "🚨 Live Anti-Cheat - Suspicious New Account!",
-			["description"] = "🚨 **" .. player.Name .. "** tried to join with a new account and was banned!\n\n📌 **Account Age:** `" .. player.AccountAge .. " days` (Limit: " .. MIN_ACCOUNT_AGE .. " days)\n",
+			["title"] = "🚨 New Account Blocked",
 			["color"] = 16711680,
 			["fields"] = {
-				{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+				{ ["name"] = "📊 Account Age", ["value"] = "**" .. player.AccountAge .. "** days (Limit: " .. MIN_ACCOUNT_AGE .. ")", ["inline"] = true },
+				{ ["name"] = "⏸️ Action", ["value"] = "Banned", ["inline"] = true },
 				{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 			},
-			["footer"] = { ["text"] = "Live Anti-Cheat - New Account Protection" }
+			["footer"] = { ["text"] = "Live Anti-Cheat • Account Protection" }
 		}
 		sendLog(wb("joinleave"), embed)
 		player:Kick("\n\n[Live Anti-Cheat]\nYour account is too new! Must be at least " .. MIN_ACCOUNT_AGE .. " days old.")
@@ -267,14 +268,13 @@ local function setupPlayer(player)
 
 	-- Join log
 	local embed = {
-		["title"] = "🔔 New User Joined",
-		["description"] = "🟢 **" .. player.Name .. "** successfully connected to the server.",
+		["title"] = "🟢 Join",
 		["color"] = 65280,
 		["fields"] = {
-			{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
 			{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
-		["footer"] = { ["text"] = "Live Anti-Cheat - Join System" }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Join System" }
 	}
 	sendLog(wb("joinleave"), embed)
 
@@ -293,28 +293,27 @@ local function setupPlayer(player)
 			if active and seat then
 				local vehicle = seat.Parent
 				local vehicleName = vehicle and vehicle.Name or "Unknown Vehicle"
-				local seatType = seat:IsA("VehicleSeat") and "Driver Seat" or "Passenger Seat"
+				local seatType = seat:IsA("VehicleSeat") and "🚦 Driver" or "💺 Passenger"
 				local embed = {
-					["title"] = "🚨 Live Anti-Cheat - Vehicle Action!",
-					["description"] = "🚗 **" .. player.Name .. "** entered a vehicle.\n\n🔍 **Vehicle:** `" .. vehicleName .. "`\n💺 **Seat:** `" .. seatType .. "`",
+					["title"] = "🚗 Vehicle Enter",
 					["color"] = 3447003,
 					["fields"] = {
-						{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+						{ ["name"] = "⏸️ Vehicle", ["value"] = "**" .. vehicleName .. "**\n" .. seatType, ["inline"] = true },
 						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 					},
-					["footer"] = { ["text"] = "Live Anti-Cheat - Vehicle System" }
+					["footer"] = { ["text"] = "Live Anti-Cheat • Vehicle System" }
 				}
 				sendLog(wb("vehicle"), embed)
 			elseif not active then
 				local embed = {
-					["title"] = "🚨 Live Anti-Cheat - Vehicle Action!",
-					["description"] = "🚶 **" .. player.Name .. "** exited a vehicle.",
+					["title"] = "🚶 Vehicle Exit",
 					["color"] = 3447003,
 					["fields"] = {
-						{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
 						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 					},
-					["footer"] = { ["text"] = "Live Anti-Cheat - Vehicle System" }
+					["footer"] = { ["text"] = "Live Anti-Cheat • Vehicle System" }
 				}
 				sendLog(wb("vehicle"), embed)
 			end
@@ -352,14 +351,15 @@ local function setupPlayer(player)
 				if part:IsA("BasePart") and part.Transparency >= 0.98 then
 					loggedPlayers[player.UserId] = true
 					local embed = {
-						["title"] = "👁️ Anti-Cheat: Invisibility Detected",
+						["title"] = "👁️ Invisibility Detected",
 						["color"] = 16711680,
 						["fields"] = {
-							{ ["name"] = "👤 Player", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
+							{ ["name"] = "👤 Player", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
 							{ ["name"] = "📋 Part", ["value"] = part.Name, ["inline"] = true },
-							{ ["name"] = "🔍 Transparency", ["value"] = math.floor(part.Transparency * 100) .. "%", ["inline"] = true },
+							{ ["name"] = "🔍 Transparency", ["value"] = "**" .. math.floor(part.Transparency * 100) .. "%**", ["inline"] = true },
+							{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 						},
-						["footer"] = { ["text"] = "Live Anti-Cheat | " .. os.date("%H:%M:%S") }
+						["footer"] = { ["text"] = "Live Anti-Cheat • Invisibility" }
 					}
 					sendLog(wb("invis"), embed)
 					task.delay(30, function() loggedPlayers[player.UserId] = nil end)
@@ -389,12 +389,18 @@ local function setupPlayer(player)
 			if newHealth < lastHealth then
 				local dmg = lastHealth - newHealth
 				if dmg > 2 then
-					local embed = {
-						["title"] = "🩸 Live System - Damage Tracking",
-						["description"] = "🔔 **Damage Log**\n\n👤 **Player:** " .. player.Name .. "\n💀 **Damage:** " .. math.floor(dmg) .. "\n🌐 **Health:** " .. math.floor(newHealth) .. "\n🕒 **Time:** " .. os.date("%H:%M:%S"),
-						["color"] = 10038562
-					}
-					sendLog(wb("damage"), embed)
+				local embed = {
+					["title"] = "🩸 Damage",
+					["color"] = 10038562,
+					["fields"] = {
+						{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+						{ ["name"] = "💀 Damage", ["value"] = "**" .. math.floor(dmg) .. "**", ["inline"] = true },
+						{ ["name"] = "❤️ Health Left", ["value"] = "**" .. math.floor(newHealth) .. "**", ["inline"] = true },
+						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Damage System" }
+				}
+				sendLog(wb("damage"), embed)
 				end
 			end
 			lastHealth = newHealth
@@ -404,18 +410,19 @@ local function setupPlayer(player)
 		humanoid.Died:Connect(function()
 			local tag = humanoid:FindFirstChild("creator")
 			local killer = tag and tag.Value or nil
-			local desc = killer and "🔪 **" .. killer.Name .. "** killed **" .. player.Name .. "**!" or "💀 **" .. player.Name .. "** died or committed suicide."
 			local fields = {
-				{ ["name"] = "👤 Profile (Victim)", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				{ ["name"] = "👤 Victim", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = true }
 			}
-			if killer then table.insert(fields, 2, { ["name"] = "👤 Profile (Killer)", ["value"] = "Name: `" .. killer.Name .. "`\nID: `" .. killer.UserId .. "`", ["inline"] = true }) end
+			if killer then
+				table.insert(fields, { ["name"] = "🔪 Killer", ["value"] = "Name: **" .. killer.Name .. "**\nID: **" .. killer.UserId .. "**", ["inline"] = true })
+			end
+			table.insert(fields, { ["name"] = "📝 Detail", ["value"] = killer and "**" .. killer.Name .. "** → **" .. player.Name .. "**" or "Suicide / Self-inflicted", ["inline"] = false })
+			table.insert(fields, { ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true })
 			local embed = {
-				["title"] = "🔔 New Death Event",
-				["description"] = desc,
+				["title"] = "💀 Death",
 				["color"] = 16711680,
 				["fields"] = fields,
-				["footer"] = { ["text"] = "Live Anti-Cheat - Kill System" }
+				["footer"] = { ["text"] = "Live Anti-Cheat • Kill System" }
 			}
 			sendLog(wb("kill"), embed)
 		end)
@@ -452,17 +459,19 @@ local function attachRemote(remote)
 				local strs = {}
 				for _, v in ipairs(args) do table.insert(strs, tostring(v)) end
 				local finalArgs = #strs > 0 and table.concat(strs, ", ") or "No Data"
-				local embed = {
-					["title"] = "🚨 Live Anti-Cheat - Remote Event Spam!",
-					["description"] = "🚨 **" .. player.Name .. "** triggered suspicious Remote activity!\n\n⚡ **Remote Name:** `" .. remote.Name .. "`\n📋 **Requests/sec:** `" .. s.count .. "/" .. REMOTE_LIMIT .. "`\n📌 **Sent Data:** `" .. finalArgs .. "`",
-					["color"] = 16711680,
-					["fields"] = {
-						{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat - Remote Protection" }
-				}
-				sendLog(wb("remote"), embed)
+			local embed = {
+				["title"] = "🚨 Remote Spam",
+				["color"] = 16711680,
+				["fields"] = {
+					{ ["name"] = "👤 Profile", ["value"] = "Name: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
+					{ ["name"] = "⚡ Remote", ["value"] = "**" .. remote.Name .. "**", ["inline"] = true },
+					{ ["name"] = "📊 Requests", ["value"] = "**" .. s.count .. "**/" .. REMOTE_LIMIT .. " req/s", ["inline"] = true },
+					{ ["name"] = "📌 Data", ["value"] = finalArgs, ["inline"] = false },
+					{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				},
+				["footer"] = { ["text"] = "Live Anti-Cheat • Remote Protection" }
+			}
+			sendLog(wb("remote"), embed)
 			end
 		end)
 	end
@@ -481,14 +490,14 @@ game:BindToClose(function()
 	local count = #Players:GetPlayers()
 	task.wait(2.5)
 	local embed = {
-		["title"] = "🚨 Live Anti-Cheat - Server Shutdown Summary!",
-		["description"] = "🚨 **Server is shutting down or updating!**\n\n📌 **Status:** Server disconnecting, data being saved.\n👤 **Players Online:** `" .. count .. "`\n",
+		["title"] = "🔌 Server Shutdown",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "💾 Database (DataStore)", ["value"] = "All player data successfully synced and saved.", ["inline"] = true },
+			{ ["name"] = "👤 Players Out", ["value"] = "**" .. count .. "** player(s)", ["inline"] = true },
+			{ ["name"] = "📌 Status", ["value"] = "Server shutting down / updating", ["inline"] = true },
 			{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
-		["footer"] = { ["text"] = "Live Anti-Cheat - Server Security & Data System" }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Shutdown System" }
 	}
 	sendLog(wb("shutdown"), embed)
 	task.wait(1)
@@ -509,14 +518,15 @@ RunService.Heartbeat:Connect(function()
 		if tps < TPS_LIMIT and (now - lastTPSLog) > 30 then
 			lastTPSLog = now
 			local embed = {
-				["title"] = "🚨 Live Anti-Cheat - Server Under Heavy Load!",
-				["description"] = "🚨 **Critical Lag Detected!**\n\n📌 **Current Server Speed (TPS):** `" .. math.floor(tps) .. "/60` (Limit: " .. TPS_LIMIT .. " TPS)\n⚡ **Possible Cause:** Extreme Lag",
+				["title"] = "🚨 Server Lag",
 				["color"] = 16711680,
 				["fields"] = {
-					{ ["name"] = "👤 Status", ["value"] = "Server is at risk of crashing!", ["inline"] = true },
+					{ ["name"] = "⚡ TPS", ["value"] = "**" .. math.floor(tps) .. "**/60", ["inline"] = true },
+					{ ["name"] = "📊 Limit", ["value"] = "**" .. TPS_LIMIT .. "** TPS", ["inline"] = true },
+					{ ["name"] = "📌 Status", ["value"] = "Server under heavy load", ["inline"] = true },
 					{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 				},
-				["footer"] = { ["text"] = "Live Anti-Cheat - Server Performance Monitor" }
+				["footer"] = { ["text"] = "Live Anti-Cheat • Performance" }
 			}
 			sendLog(wb("tps"), embed)
 		end
