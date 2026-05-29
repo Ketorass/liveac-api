@@ -61,45 +61,8 @@ end
 -- ====================== CONFIG_END ======================
 
 -- =====================================================================
--- NEW ACCOUNT PROTECTION
--- =====================================================================
-local MIN_ACCOUNT_AGE = 3
-
-Players.PlayerAdded:Connect(function(player)
-	local accountAge = player.AccountAge
-	if accountAge < MIN_ACCOUNT_AGE then
-		local embed = {
-			["title"] = "🚨 Live Anti-Cheat - Supheli Yeni Hesap!",
-			["description"] = "🚨 **" .. player.Name .. "** isimli kullanici yeni hesapla girmeye calisti ve yasaklandi!\n\n📌 **Hesap Yasi:** `" .. accountAge .. " Gunluk` (Limit: " .. MIN_ACCOUNT_AGE .. " Gun)\n",
-			["color"] = 16711680,
-			["fields"] = {
-				{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-			},
-			["footer"] = { ["text"] = "Live Anti-Cheat - Yeni Hesap Korumasi" }
-		}
-		sendLog(wb("joinleave"), embed)
-		player:Kick("\n\n[Live Anti-Cheat]\nHesabiniz cok yeni! Sunucumuza girebilmek icin hesabinizin en az " .. MIN_ACCOUNT_AGE .. " gunluk olmasi gerekmektedir.")
-	end
-end)
-
--- =====================================================================
 -- JOIN / LEAVE LOG
 -- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	local embed = {
-		["title"] = "🔔 Yeni Kullanici Giris Sagladi",
-		["description"] = "🟢 **" .. player.Name .. "** sunucuya basarili bir sekilde baglandi.",
-		["color"] = 65280,
-		["fields"] = {
-			{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-		},
-		["footer"] = { ["text"] = "Live Anti-Cheat - Giris Sistemi" }
-	}
-	sendLog(wb("joinleave"), embed)
-end)
-
 Players.PlayerRemoving:Connect(function(player)
 	local embed = {
 		["title"] = "🔔 Kullanici Sunucudan Ayrildi",
@@ -112,45 +75,6 @@ Players.PlayerRemoving:Connect(function(player)
 		["footer"] = { ["text"] = "Live Anti-Cheat - Cikis Sistemi" }
 	}
 	sendLog(wb("joinleave"), embed)
-end)
-
--- =====================================================================
--- VEHICLE TRACKING
--- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function(character)
-		local humanoid = character:WaitForChild("Humanoid")
-		humanoid.Seated:Connect(function(active, seat)
-			if active and seat then
-				local vehicle = seat.Parent
-				local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Arac"
-				local koltukTuru = seat:IsA("VehicleSeat") and "Sofor Koltugu" or "Yolcu Koltugu"
-				local embed = {
-					["title"] = "🚨 Live Anti-Cheat - Arac Hareketi!",
-					["description"] = "🚗 **" .. player.Name .. "** isimli oyuncu bir araca bindi.\n\n🔍 **Arac:** `" .. aracIsmi .. "`\n💺 **Koltuk:** `" .. koltukTuru .. "`",
-					["color"] = 3447003,
-					["fields"] = {
-						{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat - Arac Sistemi" }
-				}
-				sendLog(wb("vehicle"), embed)
-			elseif not active then
-				local embed = {
-					["title"] = "🚨 Live Anti-Cheat - Arac Hareketi!",
-					["description"] = "🚶 **" .. player.Name .. "** isimli oyuncu araçtan indi.",
-					["color"] = 3447003,
-					["fields"] = {
-						{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat - Arac Sistemi" }
-				}
-				sendLog(wb("vehicle"), embed)
-			end
-		end)
-	end)
 end)
 
 -- =====================================================================
@@ -277,12 +201,6 @@ TextChatService.MessageReceived:Connect(function(msg)
 	handleChatMessage(Players:GetPlayerByUserId(src.UserId), msg.Text)
 end)
 
-Players.PlayerAdded:Connect(function(player)
-	player.Chatted:Connect(function(message)
-		handleChatMessage(player, message)
-	end)
-end)
-
 Players.PlayerRemoving:Connect(function(player)
 	playerChatCount[player] = nil
 	mutedPlayers[player] = nil
@@ -318,45 +236,113 @@ local function HandleViolation(player, reason, value)
 	end
 end
 
-local function TrackPlayer(player)
-	if SETTINGS.WHITELIST[player.UserId] then return end
-	SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }
-	player.CharacterAdded:Connect(function(char)
-		local root = char:WaitForChild("HumanoidRootPart")
-		local hum = char:WaitForChild("Humanoid")
-		while char.Parent and player.Parent do
-			task.wait(SETTINGS.TICK_RATE)
-			local cp = root.Position
-			if SESSION_DATA[player].LastPos then
-				local iv = hum.Sit
-				local dist = (Vector3.new(cp.X, 0, cp.Z) - Vector3.new(SESSION_DATA[player].LastPos.X, 0, SESSION_DATA[player].LastPos.Z)).Magnitude
-				local speed = dist / SETTINGS.TICK_RATE
-				local limit = iv and SETTINGS.MAX_VEHICLE_SPEED or SETTINGS.MAX_WALK_SPEED
-				if speed > limit then HandleViolation(player, "Hiz/Isinlanma", math.floor(speed) .. " studs/s") end
-				local ray = workspace:Raycast(root.Position, Vector3.new(0, -30, 0))
-				if not ray and not iv and hum.FloorMaterial == Enum.Material.Air then
-					SESSION_DATA[player].VerticalTick += SETTINGS.TICK_RATE
-					if SESSION_DATA[player].VerticalTick >= SETTINGS.FLIGHT_THRESHOLD then
-						HandleViolation(player, "Ucma/Fling", SESSION_DATA[player].VerticalTick .. "sn")
-						SESSION_DATA[player].VerticalTick = 0
-					end
-				else SESSION_DATA[player].VerticalTick = 0 end
-			end
-			SESSION_DATA[player].LastPos = cp
-		end
-	end)
-end
-
-Players.PlayerAdded:Connect(TrackPlayer)
-Players.PlayerRemoving:Connect(function(p) SESSION_DATA[p] = nil end)
-
 -- =====================================================================
--- INVISIBILITY DETECT
+-- PLAYER SETUP (Speed, Invis, Damage, Kill, Vehicle, Chat, Join)
 -- =====================================================================
 local loggedPlayers = {}
+local MIN_ACCOUNT_AGE = 3
 
-Players.PlayerAdded:Connect(function(player)
+local function setupPlayer(player)
+	if SETTINGS.WHITELIST[player.UserId] then return end
+
+	-- New account protection
+	if player.AccountAge < MIN_ACCOUNT_AGE then
+		local embed = {
+			["title"] = "🚨 Live Anti-Cheat - Supheli Yeni Hesap!",
+			["description"] = "🚨 **" .. player.Name .. "** isimli kullanici yeni hesapla girmeye calisti ve yasaklandi!\n\n📌 **Hesap Yasi:** `" .. player.AccountAge .. " Gunluk` (Limit: " .. MIN_ACCOUNT_AGE .. " Gun)\n",
+			["color"] = 16711680,
+			["fields"] = {
+				{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			},
+			["footer"] = { ["text"] = "Live Anti-Cheat - Yeni Hesap Korumasi" }
+		}
+		sendLog(wb("joinleave"), embed)
+		player:Kick("\n\n[Live Anti-Cheat]\nHesabiniz cok yeni! Sunucumuza girebilmek icin hesabinizin en az " .. MIN_ACCOUNT_AGE .. " gunluk olmasi gerekmektedir.")
+		return
+	end
+
+	-- Join log
+	local embed = {
+		["title"] = "🔔 Yeni Kullanici Giris Sagladi",
+		["description"] = "🟢 **" .. player.Name .. "** sunucuya basarili bir sekilde baglandi.",
+		["color"] = 65280,
+		["fields"] = {
+			{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat - Giris Sistemi" }
+	}
+	sendLog(wb("joinleave"), embed)
+
+	-- Chatted (legacy)
+	player.Chatted:Connect(function(message)
+		handleChatMessage(player, message)
+	end)
+
+	-- All character-based modules
 	player.CharacterAdded:Connect(function(character)
+		local humanoid = character:WaitForChild("Humanoid")
+		local root = character:WaitForChild("HumanoidRootPart")
+
+		-- Vehicle
+		humanoid.Seated:Connect(function(active, seat)
+			if active and seat then
+				local vehicle = seat.Parent
+				local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Arac"
+				local koltukTuru = seat:IsA("VehicleSeat") and "Sofor Koltugu" or "Yolcu Koltugu"
+				local embed = {
+					["title"] = "🚨 Live Anti-Cheat - Arac Hareketi!",
+					["description"] = "🚗 **" .. player.Name .. "** isimli oyuncu bir araca bindi.\n\n🔍 **Arac:** `" .. aracIsmi .. "`\n💺 **Koltuk:** `" .. koltukTuru .. "`",
+					["color"] = 3447003,
+					["fields"] = {
+						{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat - Arac Sistemi" }
+				}
+				sendLog(wb("vehicle"), embed)
+			elseif not active then
+				local embed = {
+					["title"] = "🚨 Live Anti-Cheat - Arac Hareketi!",
+					["description"] = "🚶 **" .. player.Name .. "** isimli oyuncu araçtan indi.",
+					["color"] = 3447003,
+					["fields"] = {
+						{ ["name"] = "👤 Profil", ["value"] = "Isim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat - Arac Sistemi" }
+				}
+				sendLog(wb("vehicle"), embed)
+			end
+		end)
+
+		-- Speed/Fly (TrackPlayer loop)
+		SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }
+		task.spawn(function()
+			while character.Parent and player.Parent do
+				task.wait(SETTINGS.TICK_RATE)
+				local cp = root.Position
+				if SESSION_DATA[player].LastPos then
+					local iv = humanoid.Sit
+					local dist = (Vector3.new(cp.X, 0, cp.Z) - Vector3.new(SESSION_DATA[player].LastPos.X, 0, SESSION_DATA[player].LastPos.Z)).Magnitude
+					local speed = dist / SETTINGS.TICK_RATE
+					local limit = iv and SETTINGS.MAX_VEHICLE_SPEED or SETTINGS.MAX_WALK_SPEED
+					if speed > limit then HandleViolation(player, "Hiz/Isinlanma", math.floor(speed) .. " studs/s") end
+					local ray = workspace:Raycast(root.Position, Vector3.new(0, -30, 0))
+					if not ray and not iv and humanoid.FloorMaterial == Enum.Material.Air then
+						SESSION_DATA[player].VerticalTick += SETTINGS.TICK_RATE
+						if SESSION_DATA[player].VerticalTick >= SETTINGS.FLIGHT_THRESHOLD then
+							HandleViolation(player, "Ucma/Fling", SESSION_DATA[player].VerticalTick .. "sn")
+							SESSION_DATA[player].VerticalTick = 0
+						end
+					else SESSION_DATA[player].VerticalTick = 0 end
+				end
+				SESSION_DATA[player].LastPos = cp
+			end
+		end)
+
+		-- Invisibility
 		task.spawn(function()
 			while character.Parent do
 				task.wait(10)
@@ -377,15 +363,8 @@ Players.PlayerAdded:Connect(function(player)
 				end
 			end
 		end)
-	end)
-end)
 
--- =====================================================================
--- DAMAGE LOG
--- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function(character)
-		local humanoid = character:WaitForChild("Humanoid")
+		-- Damage
 		local lastHealth = humanoid.Health
 		humanoid.HealthChanged:Connect(function(newHealth)
 			if newHealth < lastHealth then
@@ -401,15 +380,8 @@ Players.PlayerAdded:Connect(function(player)
 			end
 			lastHealth = newHealth
 		end)
-	end)
-end)
 
--- =====================================================================
--- KILL LOG
--- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function(character)
-		local humanoid = character:WaitForChild("Humanoid")
+		-- Kill
 		humanoid.Died:Connect(function()
 			local tag = humanoid:FindFirstChild("creator")
 			local killer = tag and tag.Value or nil
@@ -429,7 +401,11 @@ Players.PlayerAdded:Connect(function(player)
 			sendLog(wb("kill"), embed)
 		end)
 	end)
-end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do setupPlayer(player) end
+Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerRemoving:Connect(function(p) SESSION_DATA[p] = nil end)
 
 
 

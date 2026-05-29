@@ -61,45 +61,8 @@ end
 -- ====================== CONFIG_END ======================
 
 -- =====================================================================
--- NEW ACCOUNT PROTECTION
--- =====================================================================
-local MIN_ACCOUNT_AGE = 3
-
-Players.PlayerAdded:Connect(function(player)
-	local accountAge = player.AccountAge
-	if accountAge < MIN_ACCOUNT_AGE then
-		local embed = {
-			["title"] = "🚨 Live Anti-Cheat - Suspicious New Account!",
-			["description"] = "🚨 **" .. player.Name .. "** tried to join with a new account and was banned!\n\n📌 **Account Age:** `" .. accountAge .. " days` (Limit: " .. MIN_ACCOUNT_AGE .. " days)\n",
-			["color"] = 16711680,
-			["fields"] = {
-				{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-				{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-			},
-			["footer"] = { ["text"] = "Live Anti-Cheat - New Account Protection" }
-		}
-		sendLog(wb("joinleave"), embed)
-		player:Kick("\n\n[Live Anti-Cheat]\nYour account is too new! Must be at least " .. MIN_ACCOUNT_AGE .. " days old.")
-	end
-end)
-
--- =====================================================================
 -- JOIN / LEAVE LOG
 -- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	local embed = {
-		["title"] = "🔔 New User Joined",
-		["description"] = "🟢 **" .. player.Name .. "** successfully connected to the server.",
-		["color"] = 65280,
-		["fields"] = {
-			{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-			{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-		},
-		["footer"] = { ["text"] = "Live Anti-Cheat - Join System" }
-	}
-	sendLog(wb("joinleave"), embed)
-end)
-
 Players.PlayerRemoving:Connect(function(player)
 	local embed = {
 		["title"] = "🔔 User Left",
@@ -114,44 +77,7 @@ Players.PlayerRemoving:Connect(function(player)
 	sendLog(wb("joinleave"), embed)
 end)
 
--- =====================================================================
--- VEHICLE TRACKING
--- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function(character)
-		local humanoid = character:WaitForChild("Humanoid")
-		humanoid.Seated:Connect(function(active, seat)
-			if active and seat then
-				local vehicle = seat.Parent
-				local vehicleName = vehicle and vehicle.Name or "Unknown Vehicle"
-				local seatType = seat:IsA("VehicleSeat") and "Driver Seat" or "Passenger Seat"
-				local embed = {
-					["title"] = "🚨 Live Anti-Cheat - Vehicle Action!",
-					["description"] = "🚗 **" .. player.Name .. "** entered a vehicle.\n\n🔍 **Vehicle:** `" .. vehicleName .. "`\n💺 **Seat:** `" .. seatType .. "`",
-					["color"] = 3447003,
-					["fields"] = {
-						{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat - Vehicle System" }
-				}
-				sendLog(wb("vehicle"), embed)
-			elseif not active then
-				local embed = {
-					["title"] = "🚨 Live Anti-Cheat - Vehicle Action!",
-					["description"] = "🚶 **" .. player.Name .. "** exited a vehicle.",
-					["color"] = 3447003,
-					["fields"] = {
-						{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
-						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat - Vehicle System" }
-				}
-				sendLog(wb("vehicle"), embed)
-			end
-		end)
-	end)
-end)
+
 
 -- =====================================================================
 -- CHAT SYSTEM (Spam + Log + Filter + Adonis)
@@ -277,19 +203,13 @@ TextChatService.MessageReceived:Connect(function(msg)
 	handleChatMessage(Players:GetPlayerByUserId(src.UserId), msg.Text)
 end)
 
-Players.PlayerAdded:Connect(function(player)
-	player.Chatted:Connect(function(message)
-		handleChatMessage(player, message)
-	end)
-end)
-
 Players.PlayerRemoving:Connect(function(player)
 	playerChatCount[player] = nil
 	mutedPlayers[player] = nil
 end)
 
 -- =====================================================================
--- SPEED / FLIGHT DETECTION
+-- PLAYER SETUP (Speed, Invis, Damage, Kill, Vehicle, Chat, Join)
 -- =====================================================================
 local AlertEvent = Instance.new("RemoteEvent", ReplicatedStorage)
 AlertEvent.Name = "LiveAlertEvent"
@@ -298,6 +218,8 @@ local SETTINGS = {
 	COOLDOWN_TIME = 8, KICK_THRESHOLD = 3, TICK_RATE = 0.5, WHITELIST = {}
 }
 local SESSION_DATA = {}
+local loggedPlayers = {}
+local MIN_ACCOUNT_AGE = 3
 
 local function HandleViolation(player, reason, value)
 	local data = SESSION_DATA[player]
@@ -318,45 +240,107 @@ local function HandleViolation(player, reason, value)
 	end
 end
 
-local function TrackPlayer(player)
+local function setupPlayer(player)
 	if SETTINGS.WHITELIST[player.UserId] then return end
-	SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }
-	player.CharacterAdded:Connect(function(char)
-		local root = char:WaitForChild("HumanoidRootPart")
-		local hum = char:WaitForChild("Humanoid")
-		while char.Parent and player.Parent do
-			task.wait(SETTINGS.TICK_RATE)
-			local cp = root.Position
-			if SESSION_DATA[player].LastPos then
-				local iv = hum.Sit
-				local dist = (Vector3.new(cp.X, 0, cp.Z) - Vector3.new(SESSION_DATA[player].LastPos.X, 0, SESSION_DATA[player].LastPos.Z)).Magnitude
-				local speed = dist / SETTINGS.TICK_RATE
-				local limit = iv and SETTINGS.MAX_VEHICLE_SPEED or SETTINGS.MAX_WALK_SPEED
-				if speed > limit then HandleViolation(player, "Speed/Teleport", math.floor(speed) .. " studs/s") end
-				local ray = workspace:Raycast(root.Position, Vector3.new(0, -30, 0))
-				if not ray and not iv and hum.FloorMaterial == Enum.Material.Air then
-					SESSION_DATA[player].VerticalTick += SETTINGS.TICK_RATE
-					if SESSION_DATA[player].VerticalTick >= SETTINGS.FLIGHT_THRESHOLD then
-						HandleViolation(player, "Flight/Fling", SESSION_DATA[player].VerticalTick .. "s")
-						SESSION_DATA[player].VerticalTick = 0
-					end
-				else SESSION_DATA[player].VerticalTick = 0 end
-			end
-			SESSION_DATA[player].LastPos = cp
-		end
+
+	-- New account protection
+	if player.AccountAge < MIN_ACCOUNT_AGE then
+		local embed = {
+			["title"] = "🚨 Live Anti-Cheat - Suspicious New Account!",
+			["description"] = "🚨 **" .. player.Name .. "** tried to join with a new account and was banned!\n\n📌 **Account Age:** `" .. player.AccountAge .. " days` (Limit: " .. MIN_ACCOUNT_AGE .. " days)\n",
+			["color"] = 16711680,
+			["fields"] = {
+				{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			},
+			["footer"] = { ["text"] = "Live Anti-Cheat - New Account Protection" }
+		}
+		sendLog(wb("joinleave"), embed)
+		player:Kick("\n\n[Live Anti-Cheat]\nYour account is too new! Must be at least " .. MIN_ACCOUNT_AGE .. " days old.")
+		return
+	end
+
+	-- Join log
+	local embed = {
+		["title"] = "🔔 New User Joined",
+		["description"] = "🟢 **" .. player.Name .. "** successfully connected to the server.",
+		["color"] = 65280,
+		["fields"] = {
+			{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat - Join System" }
+	}
+	sendLog(wb("joinleave"), embed)
+
+	-- Chatted (legacy)
+	player.Chatted:Connect(function(message)
+		handleChatMessage(player, message)
 	end)
-end
 
-Players.PlayerAdded:Connect(TrackPlayer)
-Players.PlayerRemoving:Connect(function(p) SESSION_DATA[p] = nil end)
-
--- =====================================================================
--- INVISIBILITY DETECT
--- =====================================================================
-local loggedPlayers = {}
-
-Players.PlayerAdded:Connect(function(player)
+	-- All character-based modules
 	player.CharacterAdded:Connect(function(character)
+		local humanoid = character:WaitForChild("Humanoid")
+		local root = character:WaitForChild("HumanoidRootPart")
+
+		-- Vehicle
+		humanoid.Seated:Connect(function(active, seat)
+			if active and seat then
+				local vehicle = seat.Parent
+				local vehicleName = vehicle and vehicle.Name or "Unknown Vehicle"
+				local seatType = seat:IsA("VehicleSeat") and "Driver Seat" or "Passenger Seat"
+				local embed = {
+					["title"] = "🚨 Live Anti-Cheat - Vehicle Action!",
+					["description"] = "🚗 **" .. player.Name .. "** entered a vehicle.\n\n🔍 **Vehicle:** `" .. vehicleName .. "`\n💺 **Seat:** `" .. seatType .. "`",
+					["color"] = 3447003,
+					["fields"] = {
+						{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat - Vehicle System" }
+				}
+				sendLog(wb("vehicle"), embed)
+			elseif not active then
+				local embed = {
+					["title"] = "🚨 Live Anti-Cheat - Vehicle Action!",
+					["description"] = "🚶 **" .. player.Name .. "** exited a vehicle.",
+					["color"] = 3447003,
+					["fields"] = {
+						{ ["name"] = "👤 Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = "🕒 Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat - Vehicle System" }
+				}
+				sendLog(wb("vehicle"), embed)
+			end
+		end)
+
+		-- Speed/Fly
+		SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }
+		task.spawn(function()
+			while character.Parent and player.Parent do
+				task.wait(SETTINGS.TICK_RATE)
+				local cp = root.Position
+				if SESSION_DATA[player].LastPos then
+					local iv = humanoid.Sit
+					local dist = (Vector3.new(cp.X, 0, cp.Z) - Vector3.new(SESSION_DATA[player].LastPos.X, 0, SESSION_DATA[player].LastPos.Z)).Magnitude
+					local speed = dist / SETTINGS.TICK_RATE
+					local limit = iv and SETTINGS.MAX_VEHICLE_SPEED or SETTINGS.MAX_WALK_SPEED
+					if speed > limit then HandleViolation(player, "Speed/Teleport", math.floor(speed) .. " studs/s") end
+					local ray = workspace:Raycast(root.Position, Vector3.new(0, -30, 0))
+					if not ray and not iv and humanoid.FloorMaterial == Enum.Material.Air then
+						SESSION_DATA[player].VerticalTick += SETTINGS.TICK_RATE
+						if SESSION_DATA[player].VerticalTick >= SETTINGS.FLIGHT_THRESHOLD then
+							HandleViolation(player, "Flight/Fling", SESSION_DATA[player].VerticalTick .. "s")
+							SESSION_DATA[player].VerticalTick = 0
+						end
+					else SESSION_DATA[player].VerticalTick = 0 end
+				end
+				SESSION_DATA[player].LastPos = cp
+			end
+		end)
+
+		-- Invisibility
 		task.spawn(function()
 			while character.Parent do
 				task.wait(10)
@@ -377,15 +361,8 @@ Players.PlayerAdded:Connect(function(player)
 				end
 			end
 		end)
-	end)
-end)
 
--- =====================================================================
--- DAMAGE LOG
--- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function(character)
-		local humanoid = character:WaitForChild("Humanoid")
+		-- Damage
 		local lastHealth = humanoid.Health
 		humanoid.HealthChanged:Connect(function(newHealth)
 			if newHealth < lastHealth then
@@ -401,15 +378,8 @@ Players.PlayerAdded:Connect(function(player)
 			end
 			lastHealth = newHealth
 		end)
-	end)
-end)
 
--- =====================================================================
--- KILL LOG
--- =====================================================================
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function(character)
-		local humanoid = character:WaitForChild("Humanoid")
+		-- Kill
 		humanoid.Died:Connect(function()
 			local tag = humanoid:FindFirstChild("creator")
 			local killer = tag and tag.Value or nil
@@ -429,7 +399,11 @@ Players.PlayerAdded:Connect(function(player)
 			sendLog(wb("kill"), embed)
 		end)
 	end)
-end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do setupPlayer(player) end
+Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerRemoving:Connect(function(p) SESSION_DATA[p] = nil end)
 
 
 
