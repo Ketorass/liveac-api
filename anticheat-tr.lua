@@ -80,7 +80,7 @@ local emoji = {
 -- =====================================================================
 local function sendLog(webhook, embed)
 	if webhook == "" then warn("[Live-AC] Webhook empty, skipping") return end
-	local data = { ["embeds"] = { embed } }
+	local data = { ["content"] = embed.title or "Log", ["embeds"] = { embed } }
 	local json = HttpService:JSONEncode(data)
 	task.spawn(function()
 		pcall(function()
@@ -123,7 +123,7 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
-	local wh = config.main
+	local wh = wb("anticheat")
 	local embed = {
 		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
 		["color"] = 16711680,
