@@ -52,24 +52,52 @@ local function wb(n)
 	return (v ~= nil and v ~= "") and v or config.main
 end
 
+-- ========== DISCORD EMOJİLERİ ==========
+-- Bu emojiler sunucunuzda tanımlı olmalı
+local emoji = {
+	uye = "<:uye:1508252675655995494>",
+	dikkat = "<a:dikkat:1508252116072796180>",
+	pause = "<:pause:1508253755315851385>",
+	saat = "<a:saat:1508253737431601243>",
+	event = "<:event:1508253224031748237>",
+	bell = "<a:RingingBell:1483429950190260305>",
+	join = "<a:join:1486684147970871472>",
+	leave = "<:parsher_a_leave:1486684695797170277>",
+	vehicle_in = "<a:bye_car_blank_bearish:1486689158947803267>",
+	vehicle_out = "<a:q_peperun:1486689348203319457>",
+	alarm = "<a:alarm:1465818655697932330>",
+	id = "<:id:1486640503243018323>",
+	rules = "<:ruleslogs:1486691313633067018>",
+	kan = "<:damlacik_kan:1491091955038556192>",
+	oldu = "<a:eddead:1486686805439811594>",
+	web = "<:web:1486640325681348699>",
+	bicak = "<:pepeKnife:1486686549767753738>",
+	mesaj = "<a:mesaj2:1486681118303457421>",
+	loading = "<a:LiveLoading:1483077755032834249>",
+}
+
+-- ====================== CONFIG_END ======================
+
+-- =====================================================================
+-- DISCORD LOG GÖNDERME
+-- =====================================================================
 local function sendLog(webhook, embed)
 	if webhook == "" then return end
 	local data = { ["embeds"] = { embed } }
 	pcall(function() HttpService:PostAsync(webhook, HttpService:JSONEncode(data)) end)
 end
 
--- ====================== CONFIG_END ======================
-
 -- =====================================================================
 -- JOIN / LEAVE LOG
 -- =====================================================================
 Players.PlayerRemoving:Connect(function(player)
 	local embed = {
-		["title"] = "🔴 Live Anti-Cheat ・ Çıkış Log",
+		["title"] = emoji.bell .. " Kullanıcı Sunucudan Ayrıldı",
+		["description"] = emoji.leave .. " **" .. player.Name .. "** sunucudan çıkış yaptı.",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Çıkış Sistemi" }
 	}
@@ -77,14 +105,50 @@ Players.PlayerRemoving:Connect(function(player)
 end)
 
 -- =====================================================================
--- CHAT SYSTEM (Spam + Log + Filter + Adonis)
+-- SPEED / FLIGHT DETECTION
 -- =====================================================================
-local spamNotifyEvent = Instance.new("RemoteEvent", ReplicatedStorage)
-spamNotifyEvent.Name = "SpamNotifyEvent"
-local SPAM_LIMIT = 5
-local MUTE_TIME = 60
+local AlertEvent = Instance.new("RemoteEvent", ReplicatedStorage)
+AlertEvent.Name = "LiveAlertEvent"
+local SETTINGS = {
+	MAX_WALK_SPEED = 110, MAX_VEHICLE_SPEED = 750, FLIGHT_THRESHOLD = 5,
+	COOLDOWN_TIME = 8, KICK_THRESHOLD = 3, TICK_RATE = 0.5, WHITELIST = {}
+}
+local SESSION_DATA = {}
+
+local function HandleViolation(player, reason, value)
+	local data = SESSION_DATA[player]
+	if not data or os.clock() < data.NextAlert then return end
+	data.Violations += 1
+	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
+	local embed = {
+		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
+		["color"] = 16711680,
+		["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı hile açmış olabilir!\n\n" ..
+			emoji.pause .. " **Hile Türü:** " .. reason .. "\n" ..
+			emoji.event .. " **Detay:** " .. value .. "\n" ..
+			emoji.uye .. " **Profil**\nİsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**\n" ..
+			emoji.saat .. " **Zaman**\n" .. os.date("%H:%M:%S"),
+		["footer"] = { ["text"] = "Live Anti-Cheat • Güvenlik Modülü" }
+	}
+	sendLog(wb("anticheat"), embed)
+	AlertEvent:FireClient(player)
+	if data.Violations >= SETTINGS.KICK_THRESHOLD then
+		task.wait(0.5)
+		player:Kick("\n[Live Anti-Cheat]\nSürekli şüpheli hareketler algılandı.\nDurum: Oyundan Uzaklaştırıldınız. (3/3)")
+	end
+end
+
+-- =====================================================================
+-- PLAYER SETUP
+-- =====================================================================
+local loggedPlayers = {}
+local MIN_ACCOUNT_AGE = 3
 local playerChatCount = {}
 local mutedPlayers = {}
+local SPAM_LIMIT = 5
+local MUTE_TIME = 60
+local spamNotifyEvent = Instance.new("RemoteEvent", ReplicatedStorage)
+spamNotifyEvent.Name = "SpamNotifyEvent"
 
 local blockedWords = {
 	"amk", "sg", "orospu", "pic", "pıc", "sik", "sık", "siktir", "aq", "oc", "oç",
@@ -108,173 +172,35 @@ local function cleanText(text)
 	return out
 end
 
-local function handleChatMessage(player, message)
-	if not player then return end
-	if #message < 1 then return end
-
-	-- Chat log
-	local embed = {
-		["title"] = "💬 Live Anti-Cheat ・ Mesaj Log",
-		["color"] = 16711680,
-		["fields"] = {
-			{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-			{ ["name"] = "📝 Mesaj", ["value"] = message, ["inline"] = false },
-			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-		},
-		["footer"] = { ["text"] = "Live Anti-Cheat • Log Sistemi" }
-	}
-	sendLog(wb("chat"), embed)
-
-	-- Spam (skip for muted players)
-	if mutedPlayers[player] then return end
-	local now = tick()
-	if not playerChatCount[player] then
-		playerChatCount[player] = { count = 1, lastTime = now }
-	else
-		local stats = playerChatCount[player]
-		if now - stats.lastTime < 2 then
-			stats.count += 1
-		else
-			stats.count = 1
-			stats.lastTime = now
-		end
-		if stats.count > SPAM_LIMIT then
-			mutedPlayers[player] = true
-			local embed = {
-				["title"] = "🚨 Live Anti-Cheat ・ Spam Log",
-				["color"] = 16711680,
-				["fields"] = {
-					{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-					{ ["name"] = "⚡ Hız", ["value"] = "**" .. stats.count .. "** mesaj/2sn (Limit: " .. SPAM_LIMIT .. ")", ["inline"] = true },
-					{ ["name"] = "⏸️ İşlem", ["value"] = "Susturuldu (**" .. MUTE_TIME .. "**sn)", ["inline"] = true },
-					{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-				},
-				["footer"] = { ["text"] = "Live Anti-Cheat • Sohbet Koruma" }
-			}
-			sendLog(wb("spam"), embed)
-			spamNotifyEvent:FireClient(player)
-			task.delay(MUTE_TIME, function()
-				mutedPlayers[player] = nil
-				if playerChatCount[player] then playerChatCount[player].count = 0 end
-			end)
-		end
-	end
-
-	-- Filter
-	local cleaned = cleanText(message)
-	for _, word in ipairs(blockedWords) do
-		if string.find(cleaned, word) then
-			local embed = {
-				["title"] = "🚨 Live Anti-Cheat ・ Filtre Log",
-				["color"] = 16711680,
-				["fields"] = {
-					{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-					{ ["name"] = "📌 Mesaj", ["value"] = message, ["inline"] = false },
-					{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-				},
-				["footer"] = { ["text"] = "Live Anti-Cheat • Filtre Sistemi" }
-			}
-			sendLog(wb("filter"), embed)
-			break
-		end
-	end
-
-	-- Adonis command
-	if string.sub(message, 1, 1) == ":" and #message > 2 then
-		local embed = {
-			["title"] = "⚡ Live Anti-Cheat ・ Yetkili Log",
-			["color"] = 3447003,
-			["fields"] = {
-				{ ["name"] = "👤 Yetkili", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
-				{ ["name"] = "⌨️ Komut", ["value"] = "```" .. message .. "```", ["inline"] = false },
-				{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-			},
-			["footer"] = { ["text"] = "Live Anti-Cheat • Adonis Koruma" }
-		}
-		sendLog(wb("adonis"), embed)
-	end
-end
-
-TextChatService.MessageReceived:Connect(function(msg)
-	local src = msg.TextSource
-	if not src then return end
-	handleChatMessage(Players:GetPlayerByUserId(src.UserId), msg.Text)
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-	playerChatCount[player] = nil
-	mutedPlayers[player] = nil
-end)
-
--- =====================================================================
--- SPEED / FLIGHT DETECTION
--- =====================================================================
-local AlertEvent = Instance.new("RemoteEvent", ReplicatedStorage)
-AlertEvent.Name = "LiveAlertEvent"
-local SETTINGS = {
-	MAX_WALK_SPEED = 110, MAX_VEHICLE_SPEED = 750, FLIGHT_THRESHOLD = 5,
-	COOLDOWN_TIME = 8, KICK_THRESHOLD = 3, TICK_RATE = 0.5, WHITELIST = {}
-}
-local SESSION_DATA = {}
-
-local function HandleViolation(player, reason, value)
-	local data = SESSION_DATA[player]
-	if not data or os.clock() < data.NextAlert then return end
-	data.Violations += 1
-	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
-	local embed = {
-		["title"] = "🚨 Live Anti-Cheat ・ Tespit Log",
-		["color"] = 16711680,
-		["fields"] = {
-			{ ["name"] = "👤 Oyuncu", ["value"] = player.Name .. " (`" .. player.UserId .. "`)", ["inline"] = false },
-			{ ["name"] = "🔍 Sebep", ["value"] = reason, ["inline"] = true },
-			{ ["name"] = "📊 Detay", ["value"] = value, ["inline"] = true },
-			{ ["name"] = "⚠️ İhlal", ["value"] = data.Violations .. "/3", ["inline"] = true },
-		},
-		["footer"] = { ["text"] = "Live Anti-Cheat | " .. os.date("%H:%M:%S") }
-	}
-	sendLog(wb("anticheat"), embed)
-	AlertEvent:FireClient(player)
-	if data.Violations >= SETTINGS.KICK_THRESHOLD then
-		task.wait(0.5)
-		player:Kick("\n[Live Anti-Cheat]\nSurekli supheli hareketler algilandi.\nDurum: Oyundan Uzaklastirildiniz. (3/3)")
-	end
-end
-
--- =====================================================================
--- PLAYER SETUP (Speed, Invis, Damage, Kill, Vehicle, Chat, Join)
--- =====================================================================
-local loggedPlayers = {}
-local MIN_ACCOUNT_AGE = 3
-
 local function setupPlayer(player)
 	if SETTINGS.WHITELIST[player.UserId] then return end
 
 	-- New account protection
 	if player.AccountAge < MIN_ACCOUNT_AGE then
 		local embed = {
-			["title"] = "🚨 Live Anti-Cheat ・ Hesap Log",
+			["title"] = emoji.dikkat .. " Live Anti-Cheat - Şüpheli Yeni Hesap!",
+			["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı yeni hesapla girmeye çalıştı ve yasaklandı!\n\n" ..
+				emoji.pause .. " **Hesap Yaşı:** `" .. player.AccountAge .. " Günlük` (Limit: " .. MIN_ACCOUNT_AGE .. " Gün)",
 			["color"] = 16711680,
 			["fields"] = {
-				{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-				{ ["name"] = "📊 Hesap Yaşı", ["value"] = "**" .. player.AccountAge .. "** gün (Limit: " .. MIN_ACCOUNT_AGE .. ")", ["inline"] = true },
-				{ ["name"] = "⏸️ İşlem", ["value"] = "Yasaklandı", ["inline"] = true },
-				{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 			},
-			["footer"] = { ["text"] = "Live Anti-Cheat • Hesap Koruması" }
+			["footer"] = { ["text"] = "Live Anti-Cheat • Yeni Hesap Koruması" }
 		}
 		sendLog(wb("joinleave"), embed)
-		player:Kick("\n\n[Live Anti-Cheat]\nHesabiniz cok yeni! Sunucumuza girebilmek icin hesabinizin en az " .. MIN_ACCOUNT_AGE .. " gunluk olmasi gerekmektedir.")
+		player:Kick("\n\n[Live Anti-Cheat]\nHesabınız çok yeni! Sunucumuza girebilmek için hesabınızın en az " .. MIN_ACCOUNT_AGE .. " günlük olması gerekmektedir.")
 		return
 	end
 
 	-- Join log
 	local embed = {
-		["title"] = "🟢 Live Anti-Cheat ・ Giriş Log",
+		["title"] = emoji.bell .. " Yeni Kullanıcı Giriş Sağladı",
+		["description"] = emoji.join .. " **" .. player.Name .. "** sunucuya başarılı bir şekilde bağlandı.",
 		["color"] = 65280,
 		["fields"] = {
-			{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat • Giriş Sistemi" }
 	}
@@ -282,7 +208,92 @@ local function setupPlayer(player)
 
 	-- Chatted (legacy)
 	player.Chatted:Connect(function(message)
-		handleChatMessage(player, message)
+		if not player or #message < 1 then return end
+
+		-- Chat log
+		local embed = {
+			["title"] = emoji.bell .. " Yeni Mesaj Geldi",
+			["description"] = emoji.mesaj .. " **" .. player.Name .. ":** " .. message,
+			["color"] = 16711680,
+			["fields"] = {
+				{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			},
+			["footer"] = { ["text"] = "Live Anti-Cheat • Log Sistemi" }
+		}
+		sendLog(wb("chat"), embed)
+
+		-- Spam
+		if mutedPlayers[player] then return end
+		local now = tick()
+		if not playerChatCount[player] then
+			playerChatCount[player] = { count = 1, lastTime = now }
+		else
+			local stats = playerChatCount[player]
+			if now - stats.lastTime < 2 then
+				stats.count += 1
+			else
+				stats.count = 1
+				stats.lastTime = now
+			end
+			if stats.count > SPAM_LIMIT then
+				mutedPlayers[player] = true
+				local embed = {
+					["title"] = emoji.dikkat .. " Live Anti-Cheat - Sohbet Susturma (Mute)!",
+					["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı çok hızlı mesaj yazdı ve susturuldu!\n\n" ..
+						emoji.pause .. " **Saniyedeki Mesaj:** `" .. stats.count .. "/" .. SPAM_LIMIT .. "`\n" ..
+						emoji.pause .. " **Cezası:** `" .. MUTE_TIME .. " Saniye`",
+					["color"] = 16711680,
+					["fields"] = {
+						{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Sohbet Koruma" }
+				}
+				sendLog(wb("spam"), embed)
+				spamNotifyEvent:FireClient(player)
+				task.delay(MUTE_TIME, function()
+					mutedPlayers[player] = nil
+					if playerChatCount[player] then playerChatCount[player].count = 0 end
+				end)
+			end
+		end
+
+		-- Filter
+		local cleaned = cleanText(message)
+		for _, word in ipairs(blockedWords) do
+			if string.find(cleaned, word) then
+				local embed = {
+					["title"] = emoji.dikkat .. " Live Anti-Cheat - Akıllı Filtre Alarmı!",
+					["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı akıllı filtreyi aşmaya çalıştı!\n\n" ..
+						emoji.pause .. " **Yazılan Mesaj:** `" .. message .. "`",
+					["color"] = 16711680,
+					["fields"] = {
+						{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Akıllı Filtreleme" }
+				}
+				sendLog(wb("filter"), embed)
+				break
+			end
+		end
+
+		-- Adonis
+		if string.sub(message, 1, 1) == ":" and #message > 2 then
+			local embed = {
+				["title"] = emoji.dikkat .. " Adonis Yetkili Komut Logu!",
+				["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli yetkili bir komut çalıştırdı!\n\n" ..
+					emoji.event .. " **Çalıştırılan Komut:** `" .. message .. "`",
+				["color"] = 3447003,
+				["fields"] = {
+					{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+					{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				},
+				["footer"] = { ["text"] = "Live Anti-Cheat • Adonis Koruma" }
+			}
+			sendLog(wb("adonis"), embed)
+		end
 	end)
 
 	-- All character-based modules
@@ -292,29 +303,31 @@ local function setupPlayer(player)
 
 		-- Vehicle
 		humanoid.Seated:Connect(function(active, seat)
-			local vehicle = seat and seat.Parent
-			local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Araç"
 			if active and seat then
+				local vehicle = seat.Parent
+				local aracIsmi = vehicle and vehicle.Name or "Bilinmeyen Araç"
+				local koltukTuru = seat:IsA("VehicleSeat") and "Şoför Koltuğu" or "Yolcu Koltuğu"
 				local embed = {
-					["title"] = "🚗 Live Anti-Cheat ・ Araç Log",
+					["title"] = emoji.dikkat .. " Live Anti-Cheat - Araç Hareketi!",
+					["description"] = emoji.vehicle_in .. " **" .. player.Name .. "** isimli oyuncu bir araca bindi.\n\n" ..
+						emoji.event .. " **Araç:** `" .. aracIsmi .. "`\n" ..
+						emoji.id .. " **Koltuk:** `" .. koltukTuru .. "`",
 					["color"] = 3447003,
 					["fields"] = {
-						{ ["name"] = "👤 Oyuncu", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
-						{ ["name"] = "🚗 Araç", ["value"] = "**" .. aracIsmi .. "**", ["inline"] = true },
-						{ ["name"] = "💺 Koltuk", ["value"] = seat:IsA("VehicleSeat") and "🚦 Sürücü" or "💺 Yolcu", ["inline"] = true },
-						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+						{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 					},
 					["footer"] = { ["text"] = "Live Anti-Cheat • Araç Sistemi" }
 				}
 				sendLog(wb("vehicle"), embed)
 			elseif not active then
 				local embed = {
-					["title"] = "🚶 Live Anti-Cheat ・ Araç Log",
+					["title"] = emoji.dikkat .. " Live Anti-Cheat - Araç Hareketi!",
+					["description"] = emoji.vehicle_out .. " **" .. player.Name .. "** isimli oyuncu araçtan indi.",
 					["color"] = 3447003,
 					["fields"] = {
-						{ ["name"] = "👤 Oyuncu", ["value"] = "**" .. player.Name .. "** (`" .. player.UserId .. "`)", ["inline"] = false },
-						{ ["name"] = "🚗 Araç", ["value"] = "**" .. aracIsmi .. "**", ["inline"] = true },
-						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+						{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 					},
 					["footer"] = { ["text"] = "Live Anti-Cheat • Araç Sistemi" }
 				}
@@ -322,7 +335,7 @@ local function setupPlayer(player)
 			end
 		end)
 
-		-- Speed/Fly (TrackPlayer loop)
+		-- Speed/Fly
 		SESSION_DATA[player] = { Violations = 0, NextAlert = 0, LastPos = nil, VerticalTick = 0 }
 		task.spawn(function()
 			while character.Parent and player.Parent do
@@ -333,12 +346,12 @@ local function setupPlayer(player)
 					local dist = (Vector3.new(cp.X, 0, cp.Z) - Vector3.new(SESSION_DATA[player].LastPos.X, 0, SESSION_DATA[player].LastPos.Z)).Magnitude
 					local speed = dist / SETTINGS.TICK_RATE
 					local limit = iv and SETTINGS.MAX_VEHICLE_SPEED or SETTINGS.MAX_WALK_SPEED
-					if speed > limit then HandleViolation(player, "Hiz/Isinlanma", math.floor(speed) .. " studs/s") end
+					if speed > limit then HandleViolation(player, "Hız/Işınlanma", math.floor(speed) .. " studs/s") end
 					local ray = workspace:Raycast(root.Position, Vector3.new(0, -30, 0))
 					if not ray and not iv and humanoid.FloorMaterial == Enum.Material.Air then
 						SESSION_DATA[player].VerticalTick += SETTINGS.TICK_RATE
 						if SESSION_DATA[player].VerticalTick >= SETTINGS.FLIGHT_THRESHOLD then
-							HandleViolation(player, "Ucma/Fling", SESSION_DATA[player].VerticalTick .. "sn")
+							HandleViolation(player, "Uçma/Fling", SESSION_DATA[player].VerticalTick .. "sn")
 							SESSION_DATA[player].VerticalTick = 0
 						end
 					else SESSION_DATA[player].VerticalTick = 0 end
@@ -349,57 +362,35 @@ local function setupPlayer(player)
 
 		-- Invisibility
 		local visibleParts = { "Head", "Torso", "UpperTorso", "LowerTorso", "LeftArm", "RightArm", "LeftLeg", "RightLeg" }
-		local function checkInvis()
-			if loggedPlayers[player.UserId] then return end
-			local found = false
-			for _, part in pairs(character:GetChildren()) do
-				if part:IsA("BasePart") and part.Transparency >= 0.98 then
-					for _, bp in ipairs(visibleParts) do
-						if part.Name == bp then found = true; break end
+		task.spawn(function()
+			while character.Parent do
+				task.wait(10)
+				if not loggedPlayers[player.UserId] then
+					for _, part in pairs(character:GetChildren()) do
+						if part:IsA("BasePart") then
+							for _, bp in ipairs(visibleParts) do
+								if part.Name == bp and part.Transparency >= 0.98 then
+									loggedPlayers[player.UserId] = true
+									local embed = {
+										["title"] = emoji.loading .. " Live System - Invisiblity Cheat Detect",
+										["description"] = emoji.alarm .. " **Invisibility Check**\n\n" ..
+											emoji.uye .. " **Oyuncu:** " .. player.Name .. "\n" ..
+											emoji.id .. " **ID:** " .. player.UserId .. "\n" ..
+											emoji.rules .. " **Detay:** Gizli Parça (" .. part.Name .. ")\n" ..
+											emoji.saat .. " **Zaman:** " .. os.date("%H:%M:%S"),
+										["color"] = 16711680
+									}
+									sendLog(wb("invis"), embed)
+									task.delay(30, function() loggedPlayers[player.UserId] = nil end)
+									break
+								end
+							end
+							if loggedPlayers[player.UserId] then break end
+						end
 					end
 				end
 			end
-			if found then
-				loggedPlayers[player.UserId] = true
-				local embed = {
-					["title"] = "👁️ Live Anti-Cheat ・ Görünmezlik Log",
-					["color"] = 16711680,
-					["fields"] = {
-						{ ["name"] = "👤 Oyuncu", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-						{ ["name"] = "🔍 Tespit", ["value"] = "Vücut parçaları şeffaf", ["inline"] = false },
-						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat • Görünmezlik" }
-				}
-				sendLog(wb("invis"), embed)
-				task.delay(30, function() loggedPlayers[player.UserId] = nil end)
-			end
-		end
-		checkInvis()
-		for _, part in pairs(character:GetChildren()) do
-			if part:IsA("BasePart") then
-				part:GetPropertyChangedSignal("Transparency"):Connect(function()
-					if part.Transparency >= 0.98 then checkInvis() end
-				end)
-			end
-		end
-			end
-		end
-		checkInvis()
-		character.DescendantAdded:Connect(function(desc)
-			if desc:IsA("BasePart") then
-				desc:GetPropertyChangedSignal("Transparency"):Connect(function()
-					if desc.Transparency >= 0.98 then checkInvis() end
-				end)
-			end
 		end)
-		for _, part in pairs(character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part:GetPropertyChangedSignal("Transparency"):Connect(function()
-					if part.Transparency >= 0.98 then checkInvis() end
-				end)
-			end
-		end
 
 		-- Damage
 		local lastHealth = humanoid.Health
@@ -407,18 +398,16 @@ local function setupPlayer(player)
 			if newHealth < lastHealth then
 				local dmg = lastHealth - newHealth
 				if dmg > 2 then
-				local embed = {
-					["title"] = "🩸 Live Anti-Cheat ・ Hasar Log",
-					["color"] = 10038562,
-					["fields"] = {
-						{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-						{ ["name"] = "💀 Hasar", ["value"] = "**" .. math.floor(dmg) .. "**", ["inline"] = true },
-						{ ["name"] = "❤️ Kalan Can", ["value"] = "**" .. math.floor(newHealth) .. "**", ["inline"] = true },
-						{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-					},
-					["footer"] = { ["text"] = "Live Anti-Cheat • Hasar Sistemi" }
-				}
-				sendLog(wb("damage"), embed)
+					local embed = {
+						["title"] = emoji.kan .. " Live System - Hasar Takip Sistemi",
+						["description"] = emoji.bell .. " **Damage Log**\n\n" ..
+							emoji.uye .. " **Oyuncu:** " .. player.Name .. "\n" ..
+							emoji.oldu .. " **Hasar:** " .. math.floor(dmg) .. "\n" ..
+							emoji.web .. " **Health:** " .. math.floor(newHealth) .. "\n" ..
+							emoji.saat .. " **Zaman:** " .. os.date("%H:%M:%S"),
+						["color"] = 10038562
+					}
+					sendLog(wb("damage"), embed)
 				end
 			end
 			lastHealth = newHealth
@@ -426,19 +415,17 @@ local function setupPlayer(player)
 
 		-- Kill
 		humanoid.Died:Connect(function()
-			print("[LiveAC] Kill event fired for " .. player.Name)
 			local tag = humanoid:FindFirstChild("creator")
 			local killer = tag and tag.Value or nil
+			local desc = killer and (emoji.bicak .. " **" .. killer.Name .. "** isimli oyuncu, **" .. player.Name .. "** isimli oyuncuyu kesti!") or (emoji.oldu .. " **" .. player.Name .. "** kendi kendine öldü veya intihar etti.")
 			local fields = {
-				{ ["name"] = "👤 Ölen", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = true }
+				{ ["name"] = emoji.uye .. " Profil (Ölen)", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 			}
-			if killer then
-				table.insert(fields, { ["name"] = "🔪 Katil", ["value"] = "İsim: **" .. killer.Name .. "**\nID: **" .. killer.UserId .. "**", ["inline"] = true })
-			end
-			table.insert(fields, { ["name"] = "📝 Detay", ["value"] = killer and "**" .. killer.Name .. "** → **" .. player.Name .. "**" or "Kendi kendine öldü / intihar", ["inline"] = false })
-			table.insert(fields, { ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true })
+			if killer then table.insert(fields, 2, { ["name"] = emoji.uye .. " Profil (Katil)", ["value"] = "İsim: `" .. killer.Name .. "`\nID: `" .. killer.UserId .. "`", ["inline"] = true }) end
 			local embed = {
-				["title"] = "💀 Live Anti-Cheat ・ Ölüm Log",
+				["title"] = emoji.bell .. " Yeni Ölüm Olayı",
+				["description"] = desc,
 				["color"] = 16711680,
 				["fields"] = fields,
 				["footer"] = { ["text"] = "Live Anti-Cheat • Kill Sistemi" }
@@ -455,9 +442,7 @@ end
 
 for _, player in ipairs(Players:GetPlayers()) do setupPlayer(player) end
 Players.PlayerAdded:Connect(setupPlayer)
-Players.PlayerRemoving:Connect(function(p) SESSION_DATA[p] = nil end)
-
-
+Players.PlayerRemoving:Connect(function(p) SESSION_DATA[p] = nil; playerChatCount[p] = nil; mutedPlayers[p] = nil end)
 
 -- =====================================================================
 -- REMOTE SPAM
@@ -478,19 +463,20 @@ local function attachRemote(remote)
 				local strs = {}
 				for _, v in ipairs(args) do table.insert(strs, tostring(v)) end
 				local finalArgs = #strs > 0 and table.concat(strs, ", ") or "Veri Yok"
-			local embed = {
-				["title"] = "🚨 Live Anti-Cheat ・ Remote Log",
-				["color"] = 16711680,
-				["fields"] = {
-					{ ["name"] = "👤 Profil", ["value"] = "İsim: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**", ["inline"] = false },
-					{ ["name"] = "⚡ Remote", ["value"] = "**" .. remote.Name .. "**", ["inline"] = true },
-					{ ["name"] = "📊 İstek", ["value"] = "**" .. s.count .. "**/" .. REMOTE_LIMIT .. " istek/sn", ["inline"] = true },
-					{ ["name"] = "📌 Veri", ["value"] = finalArgs, ["inline"] = false },
-					{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-				},
-				["footer"] = { ["text"] = "Live Anti-Cheat • Remote Koruma" }
-			}
-			sendLog(wb("remote"), embed)
+				local embed = {
+					["title"] = emoji.dikkat .. " Live Anti-Cheat - Remote Event Spam!",
+					["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı şüpheli Remote tetiklemesi yaptı!\n\n" ..
+						emoji.event .. " **Remote Adı:** `" .. remote.Name .. "`\n" ..
+						emoji.rules .. " **Saniyedeki İstek:** `" .. s.count .. "/" .. REMOTE_LIMIT .. "`\n" ..
+						emoji.pause .. " **Gönderilen Veri:** `" .. finalArgs .. "`",
+					["color"] = 16711680,
+					["fields"] = {
+						{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+						{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					},
+					["footer"] = { ["text"] = "Live Anti-Cheat • Remote Koruma" }
+				}
+				sendLog(wb("remote"), embed)
 			end
 		end)
 	end
@@ -509,14 +495,16 @@ game:BindToClose(function()
 	local count = #Players:GetPlayers()
 	task.wait(2.5)
 	local embed = {
-		["title"] = "🔌 Live Anti-Cheat ・ Kapanış Log",
+		["title"] = emoji.dikkat .. " Live Anti-Cheat - Sunucu Kapanış Özeti!",
+		["description"] = emoji.dikkat .. " **Sunucu Kapatılıyor veya Güncelleniyor!**\n\n" ..
+			emoji.pause .. " **Durum:** Sunucu bağlantısı kesiliyor, veriler koruma altına alınıyor.\n" ..
+			emoji.uye .. " **Çıkış Yapan Oyuncu Sayısı:** `" .. count .. "`",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "👤 Oyuncu Sayısı", ["value"] = "**" .. count .. "** oyuncu çevrimiçiydi", ["inline"] = false },
-			{ ["name"] = "📌 Durum", ["value"] = "Sunucu kapatılıyor veya güncelleniyor", ["inline"] = false },
-			{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = "💾 Veritabanı (DataStore)", ["value"] = "Tüm oyuncu verileri başarıyla senkronize edildi ve kaydedildi.", ["inline"] = true },
+			{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
-		["footer"] = { ["text"] = "Live Anti-Cheat • Kapanış Sistemi" }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Sunucu Güvenlik & Veri Sistemi" }
 	}
 	sendLog(wb("shutdown"), embed)
 	task.wait(1)
@@ -537,15 +525,16 @@ RunService.Heartbeat:Connect(function()
 		if tps < TPS_LIMIT and (now - lastTPSLog) > 30 then
 			lastTPSLog = now
 			local embed = {
-				["title"] = "🚨 Live Anti-Cheat ・ Performans Log",
+				["title"] = emoji.dikkat .. " Live Anti-Cheat - Sunucu Aşırı Yük Altında!",
+				["description"] = emoji.dikkat .. " **Sunucuda Ciddi Lag Tespit Edildi!**\n\n" ..
+					emoji.pause .. " **Mevcut Sunucu Hızı (TPS):** `" .. math.floor(tps) .. "/60` (Limit: " .. TPS_LIMIT .. " TPS)\n" ..
+					emoji.event .. " **Olası Sebep:** Aşırı Lag",
 				["color"] = 16711680,
 				["fields"] = {
-					{ ["name"] = "⚡ Anlık TPS", ["value"] = "**" .. math.floor(tps) .. "** / 60", ["inline"] = true },
-					{ ["name"] = "📊 Kritik Limit", ["value"] = "**" .. TPS_LIMIT .. "** TPS", ["inline"] = true },
-					{ ["name"] = "📌 Durum", ["value"] = "Sunucu aşırı yük altında, çökme riski var!", ["inline"] = false },
-					{ ["name"] = "🕒 Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+					{ ["name"] = emoji.uye .. " Durum", ["value"] = "Sunucu çökme tehlikesiyle karşı karşıya!", ["inline"] = true },
+					{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 				},
-				["footer"] = { ["text"] = "Live Anti-Cheat • Performans Takibi" }
+				["footer"] = { ["text"] = "Live Anti-Cheat • Sunucu Performans Takibi" }
 			}
 			sendLog(wb("tps"), embed)
 		end
@@ -554,25 +543,63 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
-
-
 -- =====================================================================
--- PERIODIC LICENSE CHECK (5 min)
+-- CHAT SYSTEM (TextChatService)
 -- =====================================================================
-task.spawn(function()
-	while true do
-		task.wait(300)
-		local suc, res = pcall(function()
-			return HttpService:GetAsync("https://liveac-api.onrender.com/loader?key=" .. LICENSE_KEY)
-		end)
-		if suc then
-			local r = tostring(res):gsub("[%s\r\n]", "")
-			if r ~= "OK" then
-				for _, p in ipairs(Players:GetPlayers()) do p:Kick("[Live Anti-Cheat] Lisans süresi doldu") end
-				break
-			end
+TextChatService.MessageReceived:Connect(function(msg)
+	local src = msg.TextSource
+	if not src then return end
+	local player = Players:GetPlayerByUserId(src.UserId)
+	if not player then return end
+
+	-- Chat log
+	local embed = {
+		["title"] = emoji.bell .. " Yeni Mesaj Geldi",
+		["description"] = emoji.mesaj .. " **" .. player.Name .. ":** " .. msg.Text,
+		["color"] = 16711680,
+		["fields"] = {
+			{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+			{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+		},
+		["footer"] = { ["text"] = "Live Anti-Cheat • Log Sistemi" }
+	}
+	sendLog(wb("chat"), embed)
+
+	-- Filter
+	local cleaned = cleanText(msg.Text)
+	for _, word in ipairs(blockedWords) do
+		if string.find(cleaned, word) then
+			local embed = {
+				["title"] = emoji.dikkat .. " Live Anti-Cheat - Akıllı Filtre Alarmı!",
+				["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli kullanıcı akıllı filtreyi aşmaya çalıştı!\n\n" ..
+					emoji.pause .. " **Yazılan Mesaj:** `" .. msg.Text .. "`",
+				["color"] = 16711680,
+				["fields"] = {
+					{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+					{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+				},
+				["footer"] = { ["text"] = "Live Anti-Cheat • Akıllı Filtreleme" }
+			}
+			sendLog(wb("filter"), embed)
+			break
 		end
+	end
+
+	-- Adonis
+	if string.sub(msg.Text, 1, 1) == ":" and #msg.Text > 2 then
+		local embed = {
+			["title"] = emoji.dikkat .. " Adonis Yetkili Komut Logu!",
+			["description"] = emoji.dikkat .. " **" .. player.Name .. "** isimli yetkili bir komut çalıştırdı!\n\n" ..
+				emoji.event .. " **Çalıştırılan Komut:** `" .. msg.Text .. "`",
+			["color"] = 3447003,
+			["fields"] = {
+				{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = true },
+				{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			},
+			["footer"] = { ["text"] = "Live Anti-Cheat • Adonis Koruma" }
+		}
+		sendLog(wb("adonis"), embed)
 	end
 end)
 
-print("[Live Anti-Cheat] Tum sistemler aktif")
+print("[Live Anti-Cheat] Tüm sistemler aktif")
