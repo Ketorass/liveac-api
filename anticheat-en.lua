@@ -129,20 +129,25 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
-	sendMsg(config.main, "**Anti-Cheat Alert** " .. player.Name .. ": " .. reason .. " (" .. value .. ")")
 	local embed = {
 		["title"] = "Live Anti-Cheat: Cheat Detected",
 		["description"] = "**" .. player.Name .. "** detected with suspicious movements!",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "[+] Cheat Type", ["value"] = "`" .. reason .. "`", ["inline"] = true },
-			{ ["name"] = "[+] Detail", ["value"] = "`" .. value .. "`", ["inline"] = true },
-			{ ["name"] = "[+] Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
-			{ ["name"] = "[+] Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = "Cheat Type", ["value"] = "`" .. reason .. "`", ["inline"] = true },
+			{ ["name"] = "Detail", ["value"] = "`" .. value .. "`", ["inline"] = true },
+			{ ["name"] = "Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
+			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
 		["footer"] = { ["text"] = "Live Anti-Cheat" }
 	}
-	sendLog(config.main, embed)
+	local data = { ["content"] = "**Anti-Cheat Alert** " .. player.Name .. ": " .. reason .. " (" .. value .. ")", ["embeds"] = { embed } }
+	local ok, json = pcall(HttpService.JSONEncode, HttpService, data)
+	if ok then
+		task.spawn(function()
+			pcall(HttpService.PostAsync, HttpService, config.main, json)
+		end)
+	end
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
