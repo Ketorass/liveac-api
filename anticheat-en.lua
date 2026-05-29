@@ -129,23 +129,24 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
+	local wh = wb("anticheat")
 	local embed = {
-		["title"] = "Live Anti-Cheat: Cheat Detected",
-		["description"] = "**" .. player.Name .. "** detected with suspicious movements!",
+		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
+		["description"] = emoji.dikkat .. " **" .. player.Name .. "** detected with suspicious movements!",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "Cheat Type", ["value"] = "`" .. reason .. "`", ["inline"] = true },
-			{ ["name"] = "Detail", ["value"] = "`" .. value .. "`", ["inline"] = true },
-			{ ["name"] = "Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
-			{ ["name"] = "Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
+			{ ["name"] = emoji.pause .. " Cheat Type", ["value"] = "`" .. reason .. "`", ["inline"] = true },
+			{ ["name"] = emoji.event .. " Detail", ["value"] = "`" .. value .. "`", ["inline"] = true },
+			{ ["name"] = emoji.uye .. " Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
+			{ ["name"] = emoji.saat .. " Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
-		["footer"] = { ["text"] = "Live Anti-Cheat" }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Security Module" }
 	}
-	local data = { ["content"] = "**Anti-Cheat Alert** " .. player.Name .. ": " .. reason .. " (" .. value .. ")", ["embeds"] = { embed } }
+	local data = { ["embeds"] = { embed } }
 	local ok, json = pcall(HttpService.JSONEncode, HttpService, data)
 	if ok then
 		task.spawn(function()
-			pcall(HttpService.PostAsync, HttpService, config.main, json)
+			pcall(HttpService.PostAsync, HttpService, wh, json)
 		end)
 	end
 	AlertEvent:FireClient(player)
