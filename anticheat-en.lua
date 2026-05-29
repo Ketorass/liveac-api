@@ -125,19 +125,10 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
-	local wh = wb("anticheat")
+	local wh = config.main
 	warn("[Live-AC] Webhook:", wh)
-	local embed = {
-		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
-		["color"] = 16711680,
-		["description"] = emoji.dikkat .. " **" .. player.Name .. "** may be using cheats!\n\n" ..
-			emoji.pause .. " **Cheat Type:** " .. reason .. "\n" ..
-			emoji.event .. " **Detail:** " .. value .. "\n" ..
-			emoji.uye .. " **Profile**\nName: **" .. player.Name .. "**\nID: **" .. player.UserId .. "**\n" ..
-			emoji.saat .. " **Time**\n" .. os.date("%H:%M:%S"),
-		["footer"] = { ["text"] = "Live Anti-Cheat • Security Module" }
-	}
-	sendLog(wh, embed)
+	local msg = "**" .. emoji.dikkat .. " " .. player.Name .. "** " .. reason .. " - " .. value
+	sendLog(wh, { ["title"] = msg, ["color"] = 16711680, ["description"] = "Player: " .. player.Name .. " (" .. player.UserId .. ")\nReason: " .. reason .. "\nDetail: " .. value .. "\nTime: " .. os.date("%H:%M:%S") })
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
