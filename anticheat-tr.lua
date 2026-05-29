@@ -86,9 +86,10 @@ local function sendLog(webhook, embed)
 		pcall(HttpService.PostAsync, HttpService, webhook, json)
 	end)
 end
-local function sendSimple(webhook, text)
+local function sendMsg(webhook, text)
 	if webhook == "" then return end
-	local json = HttpService:JSONEncode({ ["content"] = text })
+	local ok, json = pcall(HttpService.JSONEncode, HttpService, { ["content"] = text })
+	if not ok then return end
 	task.spawn(function()
 		pcall(HttpService.PostAsync, HttpService, webhook, json)
 	end)
@@ -128,20 +129,7 @@ local function HandleViolation(player, reason, value)
 	data.Violations += 1
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
-	local embed = {
-		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
-		["description"] = emoji.dikkat .. " **" .. player.Name .. "** sunucuda şüpheli hareketler tespit edildi!",
-		["color"] = 16711680,
-		["fields"] = {
-			{ ["name"] = emoji.pause .. " Hile Türü", ["value"] = "`" .. reason .. "`", ["inline"] = true },
-			{ ["name"] = emoji.event .. " Detay", ["value"] = "`" .. value .. "`", ["inline"] = true },
-			{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
-			{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
-		},
-		["footer"] = { ["text"] = "Live Anti-Cheat • Güvenlik Modülü" }
-	}
-	sendSimple(config.main, "**Anti-Cheat Alert** " .. player.Name .. ": " .. reason .. " (" .. value .. ")")
-	sendLog(config.main, embed)
+	sendMsg(config.main, "**Anti-Cheat Alert** " .. player.Name .. ": " .. reason .. " (" .. value .. ")")
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
