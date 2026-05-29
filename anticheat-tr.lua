@@ -129,19 +129,18 @@ local function HandleViolation(player, reason, value)
 	data.NextAlert = os.clock() + SETTINGS.COOLDOWN_TIME
 	warn("[Live-AC] Violation:", player.Name, reason, value, "Count:", data.Violations)
 	local embed = {
-		["title"] = "Live Anti-Cheat: Cheat Detected",
-		["description"] = "**" .. player.Name .. "** sunucuda şüpheli hareketler tespit edildi!",
+		["title"] = emoji.dikkat .. " Live Anti-Cheat: Cheat Detected",
+		["description"] = emoji.dikkat .. " **" .. player.Name .. "** sunucuda şüpheli hareketler tespit edildi!",
 		["color"] = 16711680,
 		["fields"] = {
-			{ ["name"] = "[+] Cheat Type", ["value"] = "```" .. reason .. "```", ["inline"] = true },
-			{ ["name"] = "[+] Detail", ["value"] = "```" .. value .. "```", ["inline"] = true },
-			{ ["name"] = "[+] Profile", ["value"] = "Name: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
-			{ ["name"] = "[+] Time", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true },
-			{ ["name"] = "[+] Detection #", ["value"] = "**" .. data.Violations .. "**", ["inline"] = true }
+			{ ["name"] = emoji.pause .. " Hile Türü", ["value"] = "`" .. reason .. "`", ["inline"] = true },
+			{ ["name"] = emoji.event .. " Detay", ["value"] = "`" .. value .. "`", ["inline"] = true },
+			{ ["name"] = emoji.uye .. " Profil", ["value"] = "İsim: `" .. player.Name .. "`\nID: `" .. player.UserId .. "`", ["inline"] = false },
+			{ ["name"] = emoji.saat .. " Zaman", ["value"] = "<t:" .. os.time() .. ":R>", ["inline"] = true }
 		},
-		["footer"] = { ["text"] = "Live Anti-Chat" }
+		["footer"] = { ["text"] = "Live Anti-Cheat • Güvenlik Modülü" }
 	}
-	sendLog(config.main, embed)
+	sendLog(wb("anticheat"), embed)
 	AlertEvent:FireClient(player)
 	if data.Violations >= SETTINGS.KICK_THRESHOLD then
 		task.wait(0.5)
