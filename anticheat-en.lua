@@ -81,7 +81,12 @@ local emoji = {
 local function sendLog(webhook, embed)
 	if webhook == "" then return end
 	local data = { ["embeds"] = { embed } }
-	pcall(function() HttpService:PostAsync(webhook, HttpService:JSONEncode(data)) end)
+	local json = HttpService:JSONEncode(data)
+	task.spawn(function()
+		pcall(function()
+			HttpService:PostAsync(webhook, json)
+		end)
+	end)
 end
 
 -- =====================================================================
