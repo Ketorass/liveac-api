@@ -43,8 +43,6 @@ local config = {
 	adonis = "",      -- Adonis yetkili komut logları
 	tps = "",         -- Sunucu TPS/performans uyarı logları
 	shutdown = "",    -- Sunucu kapanış logları
-	invis = "",       -- Görünmezlik tespit logları (kullanılmıyor)
-	vehicle = "",     -- Araç giriş/çıkış logları (kullanılmıyor)
 }
 
 local function wb(n)

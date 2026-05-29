@@ -43,8 +43,6 @@ local config = {
 	adonis = "",      -- Adonis admin command logs
 	tps = "",         -- Server TPS/performance warning logs
 	shutdown = "",    -- Server shutdown logs
-	invis = "",       -- Invisibility detection logs (not in use)
-	vehicle = "",     -- Vehicle enter/exit logs (not in use)
 }
 
 local function wb(n)
